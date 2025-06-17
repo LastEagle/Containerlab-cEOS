@@ -37,7 +37,7 @@ destroy lab
 sudo clab destroy -t clab-topo.yml
 </pre>
 
-
+<pre>
 ╭──────────────────┬──────────────┬─────────┬────────────────╮
 │       Name       │  Kind/Image  │  State  │ IPv4/6 Address │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
@@ -65,3 +65,4 @@ sudo clab destroy -t clab-topo.yml
 │ clab-lab-spine2  │ ceos         │ running │ 172.20.10.11   │
 │                  │ ceos:4.34.0F │         │ N/A            │
 ╰──────────────────┴──────────────┴─────────┴────────────────╯
+</pre>
