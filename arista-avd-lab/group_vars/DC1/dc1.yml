@@ -1,0 +1,4 @@
+---
+# Default gateway used for the management interface
+mgmt_gateway: 172.20.10.1
+mgmt_interface: Management0

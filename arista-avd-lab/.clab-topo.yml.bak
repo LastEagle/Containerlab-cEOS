@@ -1,0 +1,74 @@
+name: arista-avd-lab
+
+mgmt:
+  network: custom_mgmt                # management network name
+  ipv4-subnet: 172.20.10.0/24       # ipv4 range
+
+topology:
+  kinds:
+    ceos:
+      image: ceos:4.34.0F
+    linux:
+      kind: linux
+      image: alpine
+  nodes:
+    spine1:
+      kind: ceos
+      startup-config: startup/spine1-startup-config.cfg
+      mgmt-ipv4: 172.20.10.10
+    spine2:
+      kind: ceos
+      startup-config: startup/spine2-startup-config.cfg
+      mgmt-ipv4: 172.20.10.11
+    leaf1:
+      kind: ceos
+      startup-config: startup/leaf1-startup-config.cfg
+      mgmt-ipv4: 172.20.10.12
+    leaf2:
+      kind: ceos
+      startup-config: startup/leaf2-startup-config.cfg
+      mgmt-ipv4: 172.20.10.13
+    leaf3:
+      kind: ceos
+      startup-config: startup/leaf3-startup-config.cfg
+      mgmt-ipv4: 172.20.10.14
+    leaf4:
+      kind: ceos
+      startup-config: startup/leaf4-startup-config.cfg
+      mgmt-ipv4: 172.20.10.15
+    client1:
+      kind: linux
+    client2:
+      kind: linux
+
+  links:
+#spine1 -> leafs
+    - endpoints: ["spine1:eth3", "leaf1:eth10"]
+    - endpoints: ["spine1:eth4", "leaf2:eth10"]
+    - endpoints: ["spine1:eth5", "leaf3:eth10"]
+    - endpoints: ["spine1:eth6", "leaf4:eth10"]
+#spine2 -> leafs
+    - endpoints: ["spine2:eth3", "leaf1:eth11"]
+    - endpoints: ["spine2:eth4", "leaf2:eth11"]
+    - endpoints: ["spine2:eth5", "leaf3:eth11"]
+    - endpoints: ["spine2:eth6", "leaf4:eth11"]
+
+# leaf1 -> leaf2
+    - endpoints: ["leaf1:eth8", "leaf2:eth8"]
+    - endpoints: ["leaf1:eth9", "leaf2:eth9"]
+
+# leaf3 -> leaf4
+    - endpoints: ["leaf3:eth8", "leaf4:eth8"]
+    - endpoints: ["leaf3:eth9", "leaf4:eth9"]
+
+# leaf1 -> hosts
+    - endpoints: ["leaf1:eth2", "client1:eth1"]
+
+# leaf2 -> hosts
+    - endpoints: ["leaf2:eth2", "client1:eth2"]
+
+# leaf1 -> hosts
+    - endpoints: ["leaf3:eth2", "client2:eth1"]
+
+# leaf2 -> hosts
+    - endpoints: ["leaf4:eth2", "client2:eth2"]
