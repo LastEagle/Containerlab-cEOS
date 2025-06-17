@@ -1,3 +1,6 @@
+# Containerlab folder
+arista-avd-lab/clab-lab/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
