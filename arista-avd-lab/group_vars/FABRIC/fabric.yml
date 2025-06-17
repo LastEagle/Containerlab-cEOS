@@ -47,7 +47,7 @@ local_users:
   - name: admin
     privilege: 15
     role: network-admin
-    no_password: true
+    sha512_password: $6$RoR2ljQPQcWlxVGz$1dqNhS/j44.myet/8nz/abbIoUhaWgyiGET/i6y8HarjB8Q2UEIPDrZ.S56YwBiiqIuDagg5.KIUEAOqlm7h./
 
 # BGP peer groups
 bgp_peer_groups:

@@ -102,7 +102,7 @@ management api http-commands
 
 ```eos
 !
-username admin privilege 15 role network-admin nopassword
+username admin privilege 15 role network-admin secret sha512 <removed>
 username ansible privilege 15 role network-admin secret sha512 <removed>
 ```
 

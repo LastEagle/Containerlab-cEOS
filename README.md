@@ -1,9 +1,9 @@
 # Containerlab-cEOS
 
-Default user/password for cEOS - ansible//ansible
+Default user/password for cEOS - admin//admin
 Connect to cEOS
 <pre>
-ssh ansible@clab-lab-leaf1
+ssh admin@clab-lab-leaf1
 </pre>
 
 Connect to linux container
