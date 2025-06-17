@@ -2,17 +2,19 @@
 
 This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
 
-Installation
+## Installation
+#### Install containerlab and docker
 Run this script on a clean ubuntu machine, provides everything including docker.
 <pre>
 curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 </pre>
-Download the cEOS image from arista and import it to docker. I used version 4.34.0F.
+
+#### Download the cEOS image from arista and import it to docker. I used version 4.34.0F.
 <pre>
 docker import cEOS-lab-4.34.0F.tar.xz ceos:4.34.0F
 </pre>
 
-Create containerlab python virtual-env for ansible
+#### Create containerlab python virtual-env for ansible
 <pre>
 python3 -m venv cvenv
 </pre>
@@ -22,13 +24,13 @@ source cvenv/bin/activate
 </pre>
 
 
-1) Deploying the lab
+## Deploy the lab
+1) Create lab in containerlab
 <pre>
 sudo clab deploy -t clab-topo.yml
 </pre>
 
 Switches will load with a basic start configuration from the startup folder.
-
 2) Build EVPN-VXLAN configuration using ansible.
 <pre>
 ansible-playbook playbooks/build.yml
@@ -58,8 +60,7 @@ ansible-playbook playbooks/validate.yml
 </pre>
 
 
-# Useful information
-
+## Useful information
 Default user/password for cEOS - admin//admin
 Connect to cEOS
 <pre>
@@ -134,7 +135,6 @@ sudo clab graph -t clab-topo.yml
 </pre>
 
 # Containerlab setup
-
 Config is definied in clab-topo.yml
 
 Define your switches and hosts and ip addresses.  Managment interfaces are assigned to Managment0 in containerlab. This is definied in group_vars/DC1/dc1.yml as mgmt_interface: Management0.
