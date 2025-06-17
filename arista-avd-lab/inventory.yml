@@ -1,0 +1,32 @@
+# inventory/hosts.yml
+---
+all:
+  children:
+    FABRIC:
+      children:
+        DC1:
+          children:
+            SPINES:
+              hosts:
+                spine1:
+                  ansible_host: 172.20.10.10
+                spine2:
+                  ansible_host: 172.20.10.11
+            L3_LEAVES:
+              hosts:
+                leaf1:
+                  ansible_host: 172.20.10.12
+                leaf2:
+                  ansible_host: 172.20.10.13
+                leaf3:
+                  ansible_host: 172.20.10.14
+                leaf4:
+                  ansible_host: 172.20.10.15
+
+    NETWORK_SERVICES:
+      children:
+        DC1_L3_LEAVES:
+    
+    CONNECTED_ENDPOINTS:
+      children:
+        DC1_L3_LEAVES:

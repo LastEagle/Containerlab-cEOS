@@ -1,0 +1,41 @@
+---
+leaf1:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.12
+leaf2:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.13
+leaf3:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.14
+leaf4:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.15
+spine1:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.10
+spine2:
+    username: admin
+    password: admin
+    platform: ceos
+    hostname: 172.20.10.11
+client1:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.10.2
+client2:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.10.3
