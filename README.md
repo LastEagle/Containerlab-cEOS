@@ -1,5 +1,42 @@
 # Containerlab-cEOS
 
+This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
+
+1) Deploying the lab
+<pre>
+sudo clab deploy -t clab-topo.yml
+</pre>
+
+Switches will load with a basic start configuration from the startup folder.
+
+2) Build EVPN-VXLAN configuration using ansible.
+<pre>
+ansible-playbook playbooks/build.yml
+</pre>
+
+3) Build EVPN-VXLAN configuration using ansible.
+<pre>
+ansible-playbook playbooks/deploy.yml
+</pre>
+
+4) Log in switches and validate.
+<pre>
+leaf1#sh ip bgp summary 
+BGP summary information for VRF default
+Router identifier 10.255.0.3, local AS number 65101
+Neighbor Status Codes: m - Under maintenance
+  Description              Neighbor     V AS           MsgRcvd   MsgSent  InQ OutQ  Up/Down State   PfxRcd PfxAcc
+  leaf2_Vlan4093           10.255.1.97  4 65101             21        21    0    0 00:11:43 Estab   7      7
+  spine1_Ethernet3         10.255.255.0 4 65100             21        21    0    0 00:11:46 Estab   4      4
+  spine2_Ethernet3         10.255.255.2 4 65100             23        21    0    0 00:11:46 Estab   4      4
+</pre>
+
+
+5) Validate with ansible.  Results stored in reports/
+<pre>
+ansible-playbook playbooks/validate.yml
+</pre>
+
 Default user/password for cEOS - admin//admin
 Connect to cEOS
 <pre>
@@ -37,6 +74,7 @@ destroy lab
 sudo clab destroy -t clab-topo.yml
 </pre>
 
+Preconfigured devices and mgmt interface ip address.
 <pre>
 ╭──────────────────┬──────────────┬─────────┬────────────────╮
 │       Name       │  Kind/Image  │  State  │ IPv4/6 Address │
@@ -66,3 +104,14 @@ sudo clab destroy -t clab-topo.yml
 │                  │ ceos:4.34.0F │         │ N/A            │
 ╰──────────────────┴──────────────┴─────────┴────────────────╯
 </pre>
+
+Graph the lab - creates an html page at http://0.0.0.0:50080
+<pre>
+sudo clab graph -t clab-topo.yml
+</pre>
+
+Containerlab setup
+
+Config is definied in clab-topo.yml
+
+Define your switches and hosts and ip addresses.  Managment interfaces are assigned to Managment0 in containerlab. This is definied in group_vars/DC1/dc1.yml as mgmt_interface: Management0.
