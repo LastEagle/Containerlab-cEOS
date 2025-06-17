@@ -1,6 +1,6 @@
 # Containerlab-cEOS
 
-#H1 This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
+This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
 
 1) Deploying the lab
 <pre>
@@ -38,7 +38,7 @@ ansible-playbook playbooks/validate.yml
 </pre>
 
 
-#H1 Useful information
+# Useful information
 
 Default user/password for cEOS - admin//admin
 Connect to cEOS
@@ -77,7 +77,12 @@ destroy lab
 sudo clab destroy -t clab-topo.yml
 </pre>
 
-#H1 Preconfigured devices and mgmt interface ip address.
+Graph the lab - creates an html page at http://0.0.0.0:50080
+<pre>
+sudo clab graph -t clab-topo.yml
+</pre>
+
+# Preconfigured devices and mgmt interface ip address.
 <pre>
 ╭──────────────────┬──────────────┬─────────┬────────────────╮
 │       Name       │  Kind/Image  │  State  │ IPv4/6 Address │
@@ -108,12 +113,7 @@ sudo clab destroy -t clab-topo.yml
 ╰──────────────────┴──────────────┴─────────┴────────────────╯
 </pre>
 
-Graph the lab - creates an html page at http://0.0.0.0:50080
-<pre>
-sudo clab graph -t clab-topo.yml
-</pre>
-
-#H1 Containerlab setup
+# Containerlab setup
 
 Config is definied in clab-topo.yml
 
