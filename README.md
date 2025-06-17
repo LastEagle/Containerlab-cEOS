@@ -2,6 +2,17 @@
 
 This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
 
+Installation
+Run this script on a clean ubuntu machine, provides everything including docker.
+<pre>
+curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
+</pre>
+You will need to download the cEOS image from arista and import it to docker. I used version 4.34.0F.
+<pre>
+docker import cEOS-lab-4.34.0F.tar.xz ceos:4.34.0F
+</pre>
+
+
 1) Deploying the lab
 <pre>
 sudo clab deploy -t clab-topo.yml
