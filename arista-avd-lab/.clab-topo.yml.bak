@@ -1,4 +1,4 @@
-name: arista-avd-lab
+name: lab
 
 mgmt:
   network: custom_mgmt                # management network name
