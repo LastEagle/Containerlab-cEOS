@@ -118,7 +118,7 @@ port_channel_interfaces:
       groups:
       - MLAG
 - name: Port-Channel2
-  description: SERVER_leaf3-4-server1_Bond1
+  description: SERVER_leaf3-4-server1
   shutdown: false
   mlag: 2
   spanning_tree_portfast: edge

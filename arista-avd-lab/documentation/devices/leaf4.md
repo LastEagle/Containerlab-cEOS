@@ -309,7 +309,7 @@ interface Ethernet11
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
 | --------- | ----------- | ---- | ----- | ----------- | ------------| --------------------- | ------------------ | ------- | -------- |
-| Port-Channel2 | SERVER_leaf3-4-server1_Bond1 | trunk | 11-12,21-22 | 4092 | - | - | - | 2 | - |
+| Port-Channel2 | SERVER_leaf3-4-server1 | trunk | 11-12,21-22 | 4092 | - | - | - | 2 | - |
 | Port-Channel8 | MLAG_leaf3_Port-Channel8 | trunk | - | - | MLAG | - | - | - | - |
 
 #### Port-Channel Interfaces Device Configuration
@@ -317,7 +317,7 @@ interface Ethernet11
 ```eos
 !
 interface Port-Channel2
-   description SERVER_leaf3-4-server1_Bond1
+   description SERVER_leaf3-4-server1
    no shutdown
    switchport trunk native vlan 4092
    switchport trunk allowed vlan 11-12,21-22
