@@ -196,3 +196,29 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Python / venv
+.venv/
+cenv/
+__pycache__/
+*.pyc
+
+# Ansible local
+*.retry
+.ansible/
+ansible.log
+
+# AVD generated output
+intended/
+documentation/
+reports/
+config_backup/
+
+# Containerlab runtime artifacts
+clab-*/
+.clab.yml.bak
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/

@@ -11,7 +11,7 @@ curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 
 #### Download the cEOS image from arista and import it to docker. I used version 4.34.0F.
 <pre>
-docker import cEOS-lab-4.34.0F.tar.xz ceos:4.34.0F
+docker import cEOS-lab-4.34.4M.tar.xz ceos:4.34.4M
 </pre>
 
 #### Create containerlab python virtual-env for ansible
