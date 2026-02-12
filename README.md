@@ -136,28 +136,40 @@ sudo clab graph -t clab-topo.yml
 
 # Makefile Commands
 1) Bring up lab
+<pre>
 make clab-up
+</pre>
 
 2) Install deps (first time)
+<pre>
 make venv
 make deps
+</pre>
 
 3) Build + deploy
+<pre>
 make build
 make deploy
+</pre>
 
 4) Configure endpoints
+<pre>
 make endpoints
+</pre>
 
 5) Validate
+<pre>
 make validate
+</pre>
 
 6) Bring down lab
 make clab-down
+</pre>
 
 Optional: full reset
+<pre>
 make reset
-
+</pre>
 
 # Containerlab setup
 Config is definied in clab-topo.yml
