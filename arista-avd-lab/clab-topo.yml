@@ -7,7 +7,7 @@ mgmt:
 topology:
   kinds:
     ceos:
-      image: ceos:4.34.0F
+      image: ceos:4.34.4M
     linux:
       kind: linux
       image: alpine
@@ -38,8 +38,17 @@ topology:
       mgmt-ipv4: 172.20.10.15
     client1:
       kind: linux
+      binds:
+        - startup/client1-net.sh:/usr/local/bin/client-net.sh:ro
+      exec:
+        - sh -lc "sh /usr/local/bin/client-net.sh"
     client2:
       kind: linux
+      binds:
+        - startup/client2-net.sh:/usr/local/bin/client-net.sh:ro
+      exec:
+        - sh -lc "sh /usr/local/bin/client-net.sh"
+
 
   links:
 #spine1 -> leafs

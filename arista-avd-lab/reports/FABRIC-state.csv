@@ -17,7 +17,7 @@ id,dut,categories,test,description,inputs,result,messages
 16,leaf1,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet10 (IP: 10.255.255.1) - Destination: spine1 Ethernet3 (IP: 10.255.255.0),PASS,
 17,leaf1,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet11 (IP: 10.255.255.3) - Destination: spine2 Ethernet3 (IP: 10.255.255.2),PASS,
 18,leaf1,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-19,leaf1,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+19,leaf1,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 20,leaf1,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 21,leaf1,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 22,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet10 - P2P_spine1_Ethernet3 = 'up',PASS,
@@ -29,7 +29,7 @@ id,dut,categories,test,description,inputs,result,messages
 28,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Port-Channel8 - MLAG_leaf2_Port-Channel8 = 'up',PASS,
 29,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4093 - MLAG_L3 = 'up',PASS,
 30,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4094 - MLAG = 'up',PASS,
-31,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+31,leaf1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
 32,leaf1,MLAG,VerifyMlagStatus,Verifies the health status of the MLAG configuration.,,PASS,
 33,leaf1,Routing,VerifyRoutingProtocolModel,Verifies the configured routing protocol model.,Routing protocol model: multi-agent,PASS,
 34,leaf1,Routing,VerifyRoutingTableEntry,Verifies that the provided routes are present in the routing table of a specified VRF.,Route: 10.255.0.1 - Peer: spine1,PASS,
@@ -60,7 +60,7 @@ id,dut,categories,test,description,inputs,result,messages
 59,leaf2,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet10 (IP: 10.255.255.5) - Destination: spine1 Ethernet4 (IP: 10.255.255.4),PASS,
 60,leaf2,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet11 (IP: 10.255.255.7) - Destination: spine2 Ethernet4 (IP: 10.255.255.6),PASS,
 61,leaf2,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-62,leaf2,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+62,leaf2,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 63,leaf2,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 64,leaf2,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 65,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet10 - P2P_spine1_Ethernet4 = 'up',PASS,
@@ -72,7 +72,7 @@ id,dut,categories,test,description,inputs,result,messages
 71,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Port-Channel8 - MLAG_leaf1_Port-Channel8 = 'up',PASS,
 72,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4093 - MLAG_L3 = 'up',PASS,
 73,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4094 - MLAG = 'up',PASS,
-74,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+74,leaf2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
 75,leaf2,MLAG,VerifyMlagStatus,Verifies the health status of the MLAG configuration.,,PASS,
 76,leaf2,Routing,VerifyRoutingProtocolModel,Verifies the configured routing protocol model.,Routing protocol model: multi-agent,PASS,
 77,leaf2,Routing,VerifyRoutingTableEntry,Verifies that the provided routes are present in the routing table of a specified VRF.,Route: 10.255.0.1 - Peer: spine1,PASS,
@@ -103,7 +103,7 @@ id,dut,categories,test,description,inputs,result,messages
 102,leaf3,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet10 (IP: 10.255.255.9) - Destination: spine1 Ethernet5 (IP: 10.255.255.8),PASS,
 103,leaf3,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet11 (IP: 10.255.255.11) - Destination: spine2 Ethernet5 (IP: 10.255.255.10),PASS,
 104,leaf3,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-105,leaf3,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+105,leaf3,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 106,leaf3,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 107,leaf3,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 108,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet10 - P2P_spine1_Ethernet5 = 'up',PASS,
@@ -115,7 +115,7 @@ id,dut,categories,test,description,inputs,result,messages
 114,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Port-Channel8 - MLAG_leaf4_Port-Channel8 = 'up',PASS,
 115,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4093 - MLAG_L3 = 'up',PASS,
 116,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4094 - MLAG = 'up',PASS,
-117,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+117,leaf3,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
 118,leaf3,MLAG,VerifyMlagStatus,Verifies the health status of the MLAG configuration.,,PASS,
 119,leaf3,Routing,VerifyRoutingProtocolModel,Verifies the configured routing protocol model.,Routing protocol model: multi-agent,PASS,
 120,leaf3,Routing,VerifyRoutingTableEntry,Verifies that the provided routes are present in the routing table of a specified VRF.,Route: 10.255.0.1 - Peer: spine1,PASS,
@@ -146,7 +146,7 @@ id,dut,categories,test,description,inputs,result,messages
 145,leaf4,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet10 (IP: 10.255.255.13) - Destination: spine1 Ethernet6 (IP: 10.255.255.12),PASS,
 146,leaf4,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet11 (IP: 10.255.255.15) - Destination: spine2 Ethernet6 (IP: 10.255.255.14),PASS,
 147,leaf4,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-148,leaf4,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+148,leaf4,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 149,leaf4,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 150,leaf4,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 151,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet10 - P2P_spine1_Ethernet6 = 'up',PASS,
@@ -158,7 +158,7 @@ id,dut,categories,test,description,inputs,result,messages
 157,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Port-Channel8 - MLAG_leaf3_Port-Channel8 = 'up',PASS,
 158,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4093 - MLAG_L3 = 'up',PASS,
 159,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vlan4094 - MLAG = 'up',PASS,
-160,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+160,leaf4,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Vxlan1 = 'up',FAIL,"Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
 161,leaf4,MLAG,VerifyMlagStatus,Verifies the health status of the MLAG configuration.,,PASS,
 162,leaf4,Routing,VerifyRoutingProtocolModel,Verifies the configured routing protocol model.,Routing protocol model: multi-agent,PASS,
 163,leaf4,Routing,VerifyRoutingTableEntry,Verifies that the provided routes are present in the routing table of a specified VRF.,Route: 10.255.0.1 - Peer: spine1,PASS,
@@ -188,7 +188,7 @@ id,dut,categories,test,description,inputs,result,messages
 187,spine1,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet5 (IP: 10.255.255.8) - Destination: leaf3 Ethernet10 (IP: 10.255.255.9),PASS,
 188,spine1,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet6 (IP: 10.255.255.12) - Destination: leaf4 Ethernet10 (IP: 10.255.255.13),PASS,
 189,spine1,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-190,spine1,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+190,spine1,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 191,spine1,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 192,spine1,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 193,spine1,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet3 - P2P_leaf1_Ethernet10 = 'up',PASS,
@@ -216,7 +216,7 @@ id,dut,categories,test,description,inputs,result,messages
 215,spine2,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet5 (IP: 10.255.255.10) - Destination: leaf3 Ethernet11 (IP: 10.255.255.11),PASS,
 216,spine2,Connectivity,VerifyReachability,Test network reachability to one or many destination IP(s).,Source: P2P Interface Ethernet6 (IP: 10.255.255.14) - Destination: leaf4 Ethernet11 (IP: 10.255.255.15),PASS,
 217,spine2,Hardware,VerifyEnvironmentCooling,Verifies the status of power supply fans and all fan trays.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentCooling test is not supported on cEOSLab
-218,spine2,Hardware,VerifyEnvironmentPower,Verifies the power supplies status.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
+218,spine2,Hardware,VerifyEnvironmentPower,Verifies the power supplies state and input voltage.,Accepted States: 'ok',SKIPPED,VerifyEnvironmentPower test is not supported on cEOSLab
 219,spine2,Hardware,VerifyTemperature,Verifies if the device temperature is within acceptable limits.,,SKIPPED,VerifyTemperature test is not supported on cEOSLab
 220,spine2,Hardware,VerifyTransceiversManufacturers,Verifies if all the transceivers come from approved manufacturers.,"Accepted Manufacturers: 'Arista Networks', 'Arastra, Inc.', 'Not Present'",SKIPPED,VerifyTransceiversManufacturers test is not supported on cEOSLab
 221,spine2,Interfaces,VerifyInterfacesStatus,Verifies the operational states of specified interfaces to ensure they match expected configurations.,Interface Ethernet3 - P2P_leaf1_Ethernet11 = 'up',PASS,

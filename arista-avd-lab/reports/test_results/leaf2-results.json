@@ -57,6 +57,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet10 Neighbor: spine1 Neighbor Port: Ethernet4",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet10 - Remote: spine1 Ethernet4"
   },
   {
@@ -67,6 +73,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet11 Neighbor: spine2 Neighbor Port: Ethernet4",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet11 - Remote: spine2 Ethernet4"
   },
   {
@@ -77,6 +89,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet8 Neighbor: leaf1 Neighbor Port: Ethernet8",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet8 - Remote: leaf1 Ethernet8"
   },
   {
@@ -87,6 +105,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet9 Neighbor: leaf1 Neighbor Port: Ethernet9",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet9 - Remote: leaf1 Ethernet9"
   },
   {
@@ -97,6 +121,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.3 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: leaf1 Loopback0 (IP: 10.255.0.3)"
   },
   {
@@ -107,6 +137,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.4 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: leaf2 Loopback0 (IP: 10.255.0.4)"
   },
   {
@@ -117,6 +153,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.5 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: leaf3 Loopback0 (IP: 10.255.0.5)"
   },
   {
@@ -127,6 +169,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.6 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: leaf4 Loopback0 (IP: 10.255.0.6)"
   },
   {
@@ -137,6 +185,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.1 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: spine1 Loopback0 (IP: 10.255.0.1)"
   },
   {
@@ -147,6 +201,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.0.2 from 10.255.0.4 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: Loopback0 (IP: 10.255.0.4) - Destination: spine2 Loopback0 (IP: 10.255.0.2)"
   },
   {
@@ -157,6 +217,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.4 from 10.255.255.5 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet10 (IP: 10.255.255.5) - Destination: spine1 Ethernet4 (IP: 10.255.255.4)"
   },
   {
@@ -167,6 +233,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.6 from 10.255.255.7 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet11 (IP: 10.255.255.7) - Destination: spine2 Ethernet4 (IP: 10.255.255.6)"
   },
   {
@@ -188,7 +260,7 @@
     "categories": [
       "hardware"
     ],
-    "description": "Verifies the power supplies status.",
+    "description": "Verifies the power supplies state and input voltage.",
     "result": "skipped",
     "messages": [
       "VerifyEnvironmentPower test is not supported on cEOSLab"
@@ -228,6 +300,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet10",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet10 - P2P_spine1_Ethernet4 = 'up'"
   },
   {
@@ -238,6 +316,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet11",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet11 - P2P_spine2_Ethernet4 = 'up'"
   },
   {
@@ -248,6 +332,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet8",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet8 - MLAG_leaf1_Ethernet8 = 'up'"
   },
   {
@@ -258,6 +348,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet9",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet9 - MLAG_leaf1_Ethernet9 = 'up'"
   },
   {
@@ -268,6 +364,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Loopback0",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Loopback0 - ROUTER_ID = 'up'"
   },
   {
@@ -278,6 +380,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Loopback1",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Loopback1 - VXLAN_TUNNEL_SOURCE = 'up'"
   },
   {
@@ -288,6 +396,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Port-Channel8",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Port-Channel8 - MLAG_leaf1_Port-Channel8 = 'up'"
   },
   {
@@ -298,6 +412,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan4093",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Vlan4093 - MLAG_L3 = 'up'"
   },
   {
@@ -308,6 +428,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan4094",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Vlan4094 - MLAG = 'up'"
   },
   {
@@ -319,7 +445,16 @@
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "failure",
     "messages": [
-      "Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+      "Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
+    ],
+    "atomic_results": [
+      {
+        "description": "Interface: Vxlan1",
+        "result": "failure",
+        "messages": [
+          "Status mismatch - Expected: up/up, Actual: down/down"
+        ]
+      }
     ],
     "custom_field": "Interface Vxlan1 = 'up'"
   },

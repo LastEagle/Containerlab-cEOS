@@ -7,7 +7,7 @@ mgmt:
 topology:
   kinds:
     ceos:
-      image: ceos:4.34.0F
+      image: ceos:4.35.5M
     linux:
       kind: linux
       image: alpine

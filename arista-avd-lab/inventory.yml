@@ -25,8 +25,8 @@ all:
 
     NETWORK_SERVICES:
       children:
-        DC1_L3_LEAVES:
+        L3_LEAVES:
     
     CONNECTED_ENDPOINTS:
       children:
-        DC1_L3_LEAVES:
+        L3_LEAVES:

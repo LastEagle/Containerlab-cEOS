@@ -87,6 +87,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet3 Neighbor: leaf1 Neighbor Port: Ethernet11",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet3 - Remote: leaf1 Ethernet11"
   },
   {
@@ -97,6 +103,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet4 Neighbor: leaf2 Neighbor Port: Ethernet11",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet4 - Remote: leaf2 Ethernet11"
   },
   {
@@ -107,6 +119,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet5 Neighbor: leaf3 Neighbor Port: Ethernet11",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet5 - Remote: leaf3 Ethernet11"
   },
   {
@@ -117,6 +135,12 @@
     ],
     "description": "Verifies the connection status of the specified LLDP (Link Layer Discovery Protocol) neighbors.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Port: Ethernet6 Neighbor: leaf4 Neighbor Port: Ethernet11",
+        "result": "success"
+      }
+    ],
     "custom_field": "Local: Ethernet6 - Remote: leaf4 Ethernet11"
   },
   {
@@ -127,6 +151,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.3 from 10.255.255.2 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet3 (IP: 10.255.255.2) - Destination: leaf1 Ethernet11 (IP: 10.255.255.3)"
   },
   {
@@ -137,6 +167,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.7 from 10.255.255.6 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet4 (IP: 10.255.255.6) - Destination: leaf2 Ethernet11 (IP: 10.255.255.7)"
   },
   {
@@ -147,6 +183,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.11 from 10.255.255.10 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet5 (IP: 10.255.255.10) - Destination: leaf3 Ethernet11 (IP: 10.255.255.11)"
   },
   {
@@ -157,6 +199,12 @@
     ],
     "description": "Test network reachability to one or many destination IP(s).",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Destination 10.255.255.15 from 10.255.255.14 in VRF default",
+        "result": "success"
+      }
+    ],
     "custom_field": "Source: P2P Interface Ethernet6 (IP: 10.255.255.14) - Destination: leaf4 Ethernet11 (IP: 10.255.255.15)"
   },
   {
@@ -178,7 +226,7 @@
     "categories": [
       "hardware"
     ],
-    "description": "Verifies the power supplies status.",
+    "description": "Verifies the power supplies state and input voltage.",
     "result": "skipped",
     "messages": [
       "VerifyEnvironmentPower test is not supported on cEOSLab"
@@ -218,6 +266,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet3",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet3 - P2P_leaf1_Ethernet11 = 'up'"
   },
   {
@@ -228,6 +282,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet4",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet4 - P2P_leaf2_Ethernet11 = 'up'"
   },
   {
@@ -238,6 +298,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet5",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet5 - P2P_leaf3_Ethernet11 = 'up'"
   },
   {
@@ -248,6 +314,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet6",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Ethernet6 - P2P_leaf4_Ethernet11 = 'up'"
   },
   {
@@ -258,6 +330,12 @@
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
     "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Loopback0",
+        "result": "success"
+      }
+    ],
     "custom_field": "Interface Loopback0 - ROUTER_ID = 'up'"
   },
   {
