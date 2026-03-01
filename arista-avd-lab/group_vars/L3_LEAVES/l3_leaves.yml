@@ -1,6 +1,9 @@
 ---
 type: l3leaf
 
+# ANTA tag used to scope user-defined catalog tests to leaf devices only
+anta_tags: [l3leaf]
+
 # L3 Leaf switch group
 l3leaf:
   defaults:
