@@ -236,21 +236,20 @@ make pipeline TEARDOWN=never
 A passing run looks like:
 <pre>
 ==============================================================
-  AVD Digital Twin Pipeline  [2026-03-01 09:55:31]
+  AVD Digital Twin Pipeline  [2026-03-01 11:44:07]
 ==============================================================
-[09:55:31] [>>] Deploying topology...
-[09:55:39] [OK] Build complete.
-[09:55:49] [OK] Deploy complete.
-[09:55:59] [OK] Validation playbook complete.
+[11:44:07] [>>] Deploying topology...
+[11:45:27] [OK] Build complete.
+[11:45:39] [OK] Deploy complete.
+[11:45:46] [OK] Validation playbook complete.
 
 ==============================================================
   VALIDATION REPORT
 ==============================================================
-[09:55:59] [  ] Total:   272
-[09:55:59] [OK] Passed:  242
-[09:55:59] [  ] Skipped: 24
-[09:55:59] [OK] Failed:  0
-[09:55:59] [~~] Ignored: 6 (expected in cEOS lab — see IGNORED_TESTS)
+[11:45:46] [  ] Total:   168
+[11:45:46] [OK] Passed:  132
+[11:45:46] [  ] Skipped: 36
+[11:45:46] [OK] Failed:  0
 
 ==============================================================
   PIPELINE PASSED
@@ -261,15 +260,17 @@ Exit code is `0` on pass, `1` on failure.
 
 ## Skipped tests (cEOS lab)
 
-The following tests are not applicable in a cEOS lab environment and are skipped via `skip_tests` in `arista-avd-lab/playbooks/validate.yml`. They will not appear as failures in the report.
+The following tests are not applicable in a cEOS lab environment and are skipped via `avd_catalogs_filters` in `arista-avd-lab/playbooks/validate.yml`. They will not appear as failures in the report.
 
 | Test | Reason |
 |------|--------|
 | `VerifyNTP` | NTP is disabled in cEOS lab |
+| `VerifyInterfaceDiscards` | Management0 always has inDiscards in containerlab (management port discards multicast/broadcast) |
+| `VerifyLoggingErrors` | Benign syslog errors occur during cEOS container startup |
 
-To add more skipped tests, edit the `skip_tests` list in `validate.yml`.
+To add more skipped tests, add them to the `skip_tests` list under `avd_catalogs_filters` in `validate.yml`.
 
-Results are written to `arista-avd-lab/reports/FABRIC-state.csv` after each validate run.
+Results are written to `arista-avd-lab/anta/reports/anta_report.csv` after each validate run.
 
 # Containerlab setup
 Config is defined in clab-topo.yml

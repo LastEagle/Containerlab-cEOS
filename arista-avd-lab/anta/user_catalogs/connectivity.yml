@@ -1,0 +1,86 @@
+---
+# User-defined ANTA connectivity catalog
+# Validates the VXLAN data plane by pinging from each leaf's vtep_diagnostic
+# loopback interfaces (Loopback10 for VRF10, Loopback11 for VRF11).
+#
+# Tests are tagged 'l3leaf' and only run on devices with anta_tags: [l3leaf]
+# (i.e. leaf1-4). Spines do not have these loopbacks or VRFs.
+#
+# Client IPs:
+#   client1 — 10.10.11.11  (VLAN 11 / VRF10, connected to leaf1+leaf2)
+#   client2 — 10.10.21.12  (VLAN 21 / VRF11, connected to leaf3+leaf4)
+#   client3 — 10.10.11.12  (VLAN 11 / VRF10, connected to leaf3+leaf4)
+#
+# vtep_diagnostic loopbacks:
+#   VRF10: leaf1=10.255.10.3  leaf2=10.255.10.4  leaf3=10.255.10.5  leaf4=10.255.10.6
+#   VRF11: leaf1=10.255.11.3  leaf2=10.255.11.4  leaf3=10.255.11.5  leaf4=10.255.11.6
+
+anta.tests.connectivity:
+
+  # VRF10 — client endpoint reachability across the VXLAN fabric
+  - VerifyReachability:
+      hosts:
+        - source: Loopback10
+          destination: 10.10.11.11  # client1 (VLAN 11, leaf1/2 pair)
+          vrf: VRF10
+          repeat: 3
+        - source: Loopback10
+          destination: 10.10.11.12  # client3 (VLAN 11, leaf3/4 pair)
+          vrf: VRF10
+          repeat: 3
+      filters:
+        tags: [l3leaf]
+
+  # VRF10 — vtep_diagnostic loopback reachability between all leaf VTEPs
+  - VerifyReachability:
+      hosts:
+        - source: Loopback10
+          destination: 10.255.10.3  # leaf1 VRF10 loopback
+          vrf: VRF10
+          repeat: 3
+        - source: Loopback10
+          destination: 10.255.10.4  # leaf2 VRF10 loopback
+          vrf: VRF10
+          repeat: 3
+        - source: Loopback10
+          destination: 10.255.10.5  # leaf3 VRF10 loopback
+          vrf: VRF10
+          repeat: 3
+        - source: Loopback10
+          destination: 10.255.10.6  # leaf4 VRF10 loopback
+          vrf: VRF10
+          repeat: 3
+      filters:
+        tags: [l3leaf]
+
+  # VRF11 — client endpoint reachability across the VXLAN fabric
+  - VerifyReachability:
+      hosts:
+        - source: Loopback11
+          destination: 10.10.21.12  # client2 (VLAN 21, leaf3/4 pair)
+          vrf: VRF11
+          repeat: 3
+      filters:
+        tags: [l3leaf]
+
+  # VRF11 — vtep_diagnostic loopback reachability between all leaf VTEPs
+  - VerifyReachability:
+      hosts:
+        - source: Loopback11
+          destination: 10.255.11.3  # leaf1 VRF11 loopback
+          vrf: VRF11
+          repeat: 3
+        - source: Loopback11
+          destination: 10.255.11.4  # leaf2 VRF11 loopback
+          vrf: VRF11
+          repeat: 3
+        - source: Loopback11
+          destination: 10.255.11.5  # leaf3 VRF11 loopback
+          vrf: VRF11
+          repeat: 3
+        - source: Loopback11
+          destination: 10.255.11.6  # leaf4 VRF11 loopback
+          vrf: VRF11
+          repeat: 3
+      filters:
+        tags: [l3leaf]

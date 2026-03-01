@@ -7,6 +7,7 @@ Flow: clab-up → build → deploy → validate → report → clab-down (condit
 import argparse
 import base64
 import csv
+import json
 import signal
 import ssl
 import subprocess
@@ -21,7 +22,7 @@ REPO_ROOT     = Path(__file__).parent
 LAB_DIR       = REPO_ROOT / "arista-avd-lab"
 TOPO          = LAB_DIR / "clab-topo.yml"
 VENV_ACTIVATE = LAB_DIR / "cenv" / "bin" / "activate"
-RESULTS_CSV   = LAB_DIR / "reports" / "FABRIC-state.csv"
+RESULTS_CSV   = LAB_DIR / "anta" / "reports" / "anta_report.csv"
 FABRIC_VARS   = LAB_DIR / "group_vars" / "FABRIC" / "fabric.yml"
 
 BUILD_PLAY    = Path("playbooks/build.yml")
@@ -113,6 +114,15 @@ def get_eapi_credentials() -> tuple[str, str]:
     return user, password
 
 
+def get_deployed_credentials() -> tuple[str, str]:
+    """Read post-deploy eAPI credentials (AVD ansible user) from group_vars/FABRIC/fabric.yml."""
+    with open(FABRIC_VARS) as f:
+        fabric = yaml.safe_load(f)
+    user = fabric.get("ansible_user", "ansible")
+    password = fabric.get("ansible_password", "ansible")
+    return user, password
+
+
 def wait_for_devices(timeout: int = 300, interval: int = 10):
     """Poll each cEOS device's eAPI until responsive or timeout is reached."""
     banner("STEP 1b: Waiting for devices to be ready")
@@ -175,6 +185,66 @@ def avd_deploy():
     log("Deploy complete.", "PASS")
 
 
+def wait_for_convergence(timeout: int = 120, interval: int = 10):
+    """Poll BGP summary on all FABRIC devices until all session message queues are empty."""
+    if timeout <= 0:
+        return
+    banner("STEP 3b: Waiting for BGP/EVPN convergence")
+
+    devices = get_fabric_hosts()
+    if not devices:
+        log("No devices found in inventory — skipping convergence check.", "WARN")
+        return
+
+    user, password = get_deployed_credentials()
+    token = base64.b64encode(f"{user}:{password}".encode()).decode()
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+
+    payload = json.dumps({
+        "jsonrpc": "2.0", "method": "runCmds",
+        "params": {"version": 1, "cmds": ["show bgp summary"]}, "id": 1,
+    }).encode()
+
+    deadline = time.time() + timeout
+    log(f"Polling BGP on {len(devices)} devices until sessions converge (timeout: {timeout}s)...", "STEP")
+
+    while time.time() < deadline:
+        busy = []
+        for hostname, ip in sorted(devices.items()):
+            req = urllib.request.Request(
+                f"https://{ip}/command-api",
+                data=payload,
+                headers={"Content-Type": "application/json", "Authorization": f"Basic {token}"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as resp:
+                    data = json.loads(resp.read())
+                peers = data["result"][0].get("vrfs", {}).get("default", {}).get("peers", {})
+                for peer, info in peers.items():
+                    inq = info.get("inMsgQueue", 0)
+                    outq = info.get("outMsgQueue", 0)
+                    if inq > 0 or outq > 0:
+                        busy.append(f"{hostname}→{peer} InQ={inq} OutQ={outq}")
+            except Exception:
+                pass  # device unreachable — skip
+
+        if not busy:
+            log("BGP sessions converged on all devices.", "PASS")
+            log("Waiting 15s for data-plane (ARP/EVPN) to settle...", "INFO")
+            time.sleep(15)
+            return
+
+        remaining = int(deadline - time.time())
+        for entry in busy:
+            log(f"  {entry} ({remaining}s left)", "INFO")
+        time.sleep(interval)
+
+    log("BGP convergence timeout — proceeding anyway.", "WARN")
+
+
 def avd_validate():
     banner("STEP 4: AVD Validate (ANTA)")
     log("Running validation tests...", "STEP")
@@ -187,7 +257,7 @@ def avd_validate():
 # ---------------------------------------------------------------------------
 
 def parse_results() -> tuple[int, int, int, list[dict]]:
-    """Read FABRIC-state.csv → (passed, failed, skipped, failure_rows)."""
+    """Read anta_report.csv → (passed, failed, skipped, failure_rows)."""
     if not RESULTS_CSV.exists():
         log(f"Results file not found: {RESULTS_CSV}", "WARN")
         return 0, 0, 0, []
@@ -196,13 +266,13 @@ def parse_results() -> tuple[int, int, int, list[dict]]:
     failures = []
     with open(RESULTS_CSV, newline="") as f:
         for row in csv.DictReader(f):
-            result = row["result"].strip().upper()
-            if result == "PASS":
+            result = row["Test Status"].strip().lower()
+            if result == "success":
                 passed += 1
-            elif result == "FAIL":
+            elif result in ("failure", "error"):
                 failed += 1
                 failures.append(row)
-            elif result == "SKIPPED":
+            elif result == "skipped":
                 skipped += 1
     return passed, failed, skipped, failures
 
@@ -218,13 +288,10 @@ def print_report(passed: int, failed: int, skipped: int, failures: list[dict]):
         print()
         log("Failed tests:", "FAIL")
         for row in failures:
-            device  = row["dut"]
-            test    = row["test"]
-            inputs  = row["inputs"]
-            message = row["messages"]
-            log(f"  [{device}] {test} — {inputs or message}", "FAIL")
-            if inputs and message:
-                log(f"           {message}", "FAIL")
+            device  = row["Device"]
+            test    = row["Test Name"]
+            message = row["Message(s)"]
+            log(f"  [{device}] {test} — {message}", "FAIL")
     else:
         log(f"Failed:  {failed}", "PASS")
 
@@ -248,6 +315,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-deploy", action="store_true",
         help="Skip AVD deploy step",
+    )
+    parser.add_argument(
+        "--convergence-wait",
+        type=int,
+        default=120,
+        metavar="SECONDS",
+        help="Max seconds to poll BGP convergence after deploy (default: 120, 0 to skip)",
     )
     parser.add_argument(
         "--teardown",
@@ -293,6 +367,7 @@ def main():
 
         if not args.skip_deploy:
             avd_deploy()
+            wait_for_convergence(args.convergence_wait)
 
         avd_validate()
 
