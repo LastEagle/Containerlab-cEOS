@@ -334,6 +334,38 @@
     "result": "success",
     "atomic_results": [
       {
+        "description": "Interface: Ethernet2",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Ethernet2 - SERVER_leaf3-4-server1_PCI1 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Ethernet3",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Ethernet3 - SERVER_leaf3-4-server2_PCI1 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
         "description": "Interface: Ethernet8",
         "result": "success"
       }
@@ -398,11 +430,171 @@
     "result": "success",
     "atomic_results": [
       {
+        "description": "Interface: Loopback10",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Loopback10 - DIAG_VRF_VRF10 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Loopback11",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Loopback11 - DIAG_VRF_VRF11 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Port-Channel2",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Port-Channel2 - SERVER_leaf3-4-server1 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Port-Channel3",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Port-Channel3 - SERVER_leaf3-4-server2_Bond1 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
         "description": "Interface: Port-Channel8",
         "result": "success"
       }
     ],
     "custom_field": "Interface Port-Channel8 - MLAG_leaf4_Port-Channel8 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan11",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan11 - VRF10_VLAN11 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan12",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan12 - VRF10_VLAN12 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan21",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan21 - VRF11_VLAN21 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan22",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan22 - VRF11_VLAN22 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan3009",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan3009 - MLAG_L3_VRF_VRF10 = 'up'"
+  },
+  {
+    "name": "leaf3",
+    "test": "VerifyInterfacesStatus",
+    "categories": [
+      "interfaces"
+    ],
+    "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
+    "result": "success",
+    "atomic_results": [
+      {
+        "description": "Interface: Vlan3010",
+        "result": "success"
+      }
+    ],
+    "custom_field": "Interface Vlan3010 - MLAG_L3_VRF_VRF11 = 'up'"
   },
   {
     "name": "leaf3",
@@ -443,17 +635,11 @@
       "interfaces"
     ],
     "description": "Verifies the operational states of specified interfaces to ensure they match expected configurations.",
-    "result": "failure",
-    "messages": [
-      "Interface: Vxlan1 - Status mismatch - Expected: up/up, Actual: down/down"
-    ],
+    "result": "success",
     "atomic_results": [
       {
         "description": "Interface: Vxlan1",
-        "result": "failure",
-        "messages": [
-          "Status mismatch - Expected: up/up, Actual: down/down"
-        ]
+        "result": "success"
       }
     ],
     "custom_field": "Interface Vxlan1 = 'up'"
@@ -556,18 +742,6 @@
     "description": "Verifies that the provided routes are present in the routing table of a specified VRF.",
     "result": "success",
     "custom_field": "Route: 10.255.1.5 - Peer: leaf3"
-  },
-  {
-    "name": "leaf3",
-    "test": "VerifyNTP",
-    "categories": [
-      "system"
-    ],
-    "description": "Verifies if NTP is synchronised.",
-    "result": "failure",
-    "messages": [
-      "NTP status mismatch - Expected: synchronised Actual: NTP is disabled."
-    ]
   },
   {
     "name": "leaf3",
