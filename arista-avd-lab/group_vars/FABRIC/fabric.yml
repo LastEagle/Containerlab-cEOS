@@ -1,6 +1,10 @@
 ---
 #FABRIC.yml
 
+# Pre-deploy eAPI credentials (startup config defaults, used by pipeline.py readiness check)
+eapi_user: admin
+eapi_password: admin
+
 # Configuration specifically for deployment tasks using eAPI
 ansible_connection: httpapi
 ansible_network_os: eos

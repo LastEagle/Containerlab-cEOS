@@ -5,11 +5,15 @@ Flow: clab-up → build → deploy → validate → report → clab-down (condit
 """
 
 import argparse
+import base64
 import csv
-import os
 import signal
+import ssl
 import subprocess
 import sys
+import time
+import urllib.request
+import yaml
 from datetime import datetime
 from pathlib import Path
 
@@ -18,6 +22,7 @@ LAB_DIR       = REPO_ROOT / "arista-avd-lab"
 TOPO          = LAB_DIR / "clab-topo.yml"
 VENV_ACTIVATE = LAB_DIR / "cenv" / "bin" / "activate"
 RESULTS_CSV   = LAB_DIR / "reports" / "FABRIC-state.csv"
+FABRIC_VARS   = LAB_DIR / "group_vars" / "FABRIC" / "fabric.yml"
 
 BUILD_PLAY    = Path("playbooks/build.yml")
 DEPLOY_PLAY   = Path("playbooks/deploy.yml")
@@ -74,6 +79,86 @@ def clab_down():
     log("Tearing down topology...", "STEP")
     run(["sudo", "containerlab", "destroy", "-t", str(TOPO)], check=False)
     log("ContainerLab torn down.", "PASS")
+
+
+def get_fabric_hosts() -> dict[str, str]:
+    """Parse inventory.yml and return {hostname: ansible_host} for all FABRIC hosts."""
+    with open(LAB_DIR / INVENTORY) as f:
+        inv = yaml.safe_load(f)
+
+    hosts = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            if "hosts" in node:
+                for name, vars_ in (node["hosts"] or {}).items():
+                    ip = (vars_ or {}).get("ansible_host")
+                    if ip:
+                        hosts[name] = ip
+            for key, val in node.items():
+                if key != "hosts":
+                    walk(val)
+
+    fabric = inv.get("all", {}).get("children", {}).get("FABRIC", {})
+    walk(fabric)
+    return hosts
+
+
+def get_eapi_credentials() -> tuple[str, str]:
+    """Read pre-deploy eAPI credentials from group_vars/FABRIC/fabric.yml."""
+    with open(FABRIC_VARS) as f:
+        fabric = yaml.safe_load(f)
+    user = fabric.get("eapi_user", "admin")
+    password = fabric.get("eapi_password", "admin")
+    return user, password
+
+
+def wait_for_devices(timeout: int = 300, interval: int = 10):
+    """Poll each cEOS device's eAPI until responsive or timeout is reached."""
+    banner("STEP 1b: Waiting for devices to be ready")
+
+    devices = get_fabric_hosts()
+    if not devices:
+        log("No devices found in inventory — skipping readiness check.", "WARN")
+        return
+
+    user, password = get_eapi_credentials()
+    token = base64.b64encode(f"{user}:{password}".encode()).decode()
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+
+    pending  = set(devices.keys())
+    deadline = time.time() + timeout
+    log(f"Polling eAPI on {len(pending)} devices (timeout: {timeout}s, interval: {interval}s)...", "STEP")
+
+    while pending and time.time() < deadline:
+        for hostname in sorted(list(pending)):
+            ip  = devices[hostname]
+            url = f"https://{ip}/command-api"
+            req = urllib.request.Request(
+                url,
+                data=b'{"jsonrpc":"2.0","method":"runCmds","params":{"version":1,"cmds":["show version"]},"id":1}',
+                headers={"Content-Type": "application/json", "Authorization": f"Basic {token}"},
+                method="POST",
+            )
+            try:
+                urllib.request.urlopen(req, context=ssl_ctx, timeout=5)
+                log(f"  {hostname} ({ip}) ready", "PASS")
+                pending.remove(hostname)
+            except Exception:
+                pass
+
+        if pending:
+            remaining = int(deadline - time.time())
+            log(f"  Waiting — {len(pending)} device(s) not ready yet ({remaining}s left)...", "INFO")
+            time.sleep(interval)
+
+    if pending:
+        log(f"Timed out waiting for: {', '.join(sorted(pending))}", "FAIL")
+        raise TimeoutError(f"Devices not ready after {timeout}s")
+
+    log("All devices ready.", "PASS")
 
 
 def avd_build():
@@ -198,6 +283,7 @@ def main():
     try:
         if not args.skip_clab_up:
             clab_up()
+            wait_for_devices()
         else:
             log("Skipping clab-up (--skip-clab-up)", "WARN")
         lab_is_up = True
@@ -218,6 +304,9 @@ def main():
 
     except subprocess.CalledProcessError as e:
         log(f"Step failed (exit {e.returncode})", "FAIL")
+        pipeline_ok = False
+    except TimeoutError as e:
+        log(str(e), "FAIL")
         pipeline_ok = False
 
     finally:
