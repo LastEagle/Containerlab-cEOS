@@ -12,7 +12,7 @@ VALIDATE_PLAY ?= $(LABDIR)/playbooks/validate.yml
 VENV ?= arista-avd-lab/cenv
 ACT  := . $(VENV)/bin/activate
 
-.PHONY: venv deps clab-up clab-down build deploy validate endpoints reset all pipeline
+.PHONY: venv deps clab-up clab-down build deploy validate endpoints reset all pipeline pipeline-no-batfish batfish
 
 venv:
 	python3 -m venv $(VENV)
@@ -48,8 +48,23 @@ reset: clab-down clab-up
 
 all: build deploy validate
 
-# Full pipeline: up → build → deploy → validate → down
+# Full pipeline: up → build → batfish → deploy → validate → down
+# Batfish container is started and stopped automatically.
 # Override teardown behaviour: make pipeline TEARDOWN=always|on-pass|never
 TEARDOWN ?= on-pass
 pipeline:
 	python3 pipeline.py --teardown $(TEARDOWN)
+
+# Skip Batfish (quick iteration, no static analysis gate)
+pipeline-no-batfish:
+	python3 pipeline.py --skip-batfish --teardown $(TEARDOWN)
+
+# Standalone Batfish analysis — no live lab required.
+# Build configs first: make build && make batfish
+batfish:
+	python3 pipeline.py \
+		--skip-clab-up \
+		--skip-build \
+		--skip-deploy \
+		--skip-validate \
+		--teardown never

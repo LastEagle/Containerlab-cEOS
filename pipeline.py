@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AVD ContainerLab Pipeline Orchestrator
-Flow: clab-up → build → deploy → validate → report → clab-down (conditional)
+Flow: clab-up → build → [batfish] → deploy → validate → report → clab-down (conditional)
 """
 
 import argparse
@@ -9,6 +9,7 @@ import base64
 import csv
 import json
 import signal
+import socket
 import ssl
 import subprocess
 import sys
@@ -24,6 +25,8 @@ TOPO          = LAB_DIR / "clab-topo.yml"
 VENV_ACTIVATE = LAB_DIR / "cenv" / "bin" / "activate"
 RESULTS_CSV   = LAB_DIR / "anta" / "reports" / "anta_report.csv"
 FABRIC_VARS   = LAB_DIR / "group_vars" / "FABRIC" / "fabric.yml"
+CONFIGS_DIR        = LAB_DIR / "intended" / "configs"
+BATFISH_REPORT_DIR = LAB_DIR / "batfish" / "reports"
 
 BUILD_PLAY    = Path("playbooks/build.yml")
 DEPLOY_PLAY   = Path("playbooks/deploy.yml")
@@ -245,6 +248,187 @@ def wait_for_convergence(timeout: int = 120, interval: int = 10):
     log("BGP convergence timeout — proceeding anyway.", "WARN")
 
 
+BATFISH_CONTAINER = "batfish-pipeline"
+
+
+def _batfish_reachable() -> bool:
+    try:
+        s = socket.create_connection(("localhost", 9996), timeout=2)
+        s.close()
+        return True
+    except OSError:
+        return False
+
+
+def start_batfish() -> bool:
+    """Start the Batfish container if not already running. Returns True if we started it."""
+    banner("Batfish — Starting container")
+    if _batfish_reachable():
+        log("Batfish already running at localhost:9996 — reusing.", "INFO")
+        return False
+
+    log("Starting Batfish container (batfish/allinone)...", "STEP")
+    result = subprocess.run(
+        ["docker", "run", "-d", "--name", BATFISH_CONTAINER,
+         "-p", "9996:9996", "batfish/allinone"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Failed to start Batfish container: {result.stderr.strip()}\n"
+            "Is Docker running? Try: docker info"
+        )
+
+    log("Waiting for Batfish to be ready...", "INFO")
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        if _batfish_reachable():
+            log("Batfish container ready.", "PASS")
+            return True
+        time.sleep(3)
+
+    raise RuntimeError("Batfish container started but not reachable after 60s.")
+
+
+def stop_batfish():
+    """Stop and remove the Batfish container started by this pipeline run."""
+    banner("Batfish — Stopping container")
+    subprocess.run(["docker", "stop", BATFISH_CONTAINER], capture_output=True)
+    subprocess.run(["docker", "rm",   BATFISH_CONTAINER], capture_output=True)
+    log("Batfish container stopped.", "PASS")
+
+
+def batfish_analyze():
+    banner("STEP 2b: Batfish — Static Config Analysis")
+
+    try:
+        import logging
+        from pybatfish.client.session import Session
+    except ImportError:
+        raise RuntimeError("pybatfish is not installed. Run: pip install pybatfish")
+
+    logging.getLogger("pybatfish").setLevel(logging.ERROR)
+
+    if not CONFIGS_DIR.exists() or not any(CONFIGS_DIR.glob("*.cfg")):
+        raise RuntimeError(f"No .cfg files found in {CONFIGS_DIR}. Run 'make build' first.")
+
+    import shutil
+    import tempfile
+
+    cfgs = list(CONFIGS_DIR.glob("*.cfg"))
+    log(f"Batfish reachable. Staging {len(cfgs)} config(s) for snapshot upload...", "INFO")
+
+    # Batfish snapshot root must contain a configs/ subdirectory
+    with tempfile.TemporaryDirectory(prefix="batfish-snap-") as snap_root:
+        snap_configs = Path(snap_root) / "configs"
+        snap_configs.mkdir()
+        for cfg in cfgs:
+            shutil.copy2(cfg, snap_configs / cfg.name)
+
+        bf = Session(host="localhost")
+        bf.set_network("avd-lab")
+        bf.init_snapshot(snap_root, name="snapshot", overwrite=True)
+
+    log(f"Snapshot loaded from: {CONFIGS_DIR}", "INFO")
+
+    # Run all three queries upfront so DataFrames are available for both analysis and CSV export
+    log("Querying Batfish (initIssues, bgpSessionCompatibility, undefinedReferences)...", "STEP")
+    df_init  = bf.q.initIssues().answer().frame()
+    df_bgp   = bf.q.bgpSessionCompatibility().answer().frame()
+    df_undef = bf.q.undefinedReferences().answer().frame()
+
+    issues_found = []
+
+    # --- initIssues ---
+    # Columns: Nodes, Source_Lines, Type, Details, Line_Text, Parser_Context
+    # Both "Parse warning" and "Parse error" are Batfish EOS parser limitations for cEOS AVD
+    # configs (unrecognised EOS syntax, NPEs on valid EOS address-family commands, etc.).
+    # Treat all as informational WARNs — non-BGP undefinedReferences catch real missing defs.
+    log("initIssues...", "STEP")
+    if df_init.empty:
+        log("initIssues: no issues.", "PASS")
+    else:
+        errors   = df_init[df_init["Type"] == "Parse error"]
+        warnings = df_init[df_init["Type"] != "Parse error"]
+        if not warnings.empty:
+            log(f"initIssues: {len(warnings)} parse warning(s) — unrecognised EOS syntax (expected for cEOS).", "WARN")
+        if not errors.empty:
+            log(f"initIssues: {len(errors)} parse error(s) — Batfish EOS parser limitation(s) (expected for cEOS).", "WARN")
+        if warnings.empty and errors.empty:
+            log("initIssues: no issues.", "PASS")
+
+    # --- bgpSessionCompatibility ---
+    # Columns: Node, VRF, Local_AS, Local_Interface, Local_IP, Remote_AS, Remote_Node,
+    #          Remote_Interface, Remote_IP, Address_Families, Session_Type, Configured_Status
+    # UNIQUE_MATCH  → OK
+    # NO_LOCAL_IP / UNKNOWN_REMOTE / HALF_OPEN → known cEOS/MLAG Batfish limitations → WARN
+    # anything else → blocking
+    log("bgpSessionCompatibility...", "STEP")
+    if df_bgp.empty:
+        log("bgpSessionCompatibility: no sessions found (check snapshot).", "WARN")
+    else:
+        ok_count   = 0
+        warn_count = 0
+        for _, row in df_bgp.iterrows():
+            status = str(row.get("Configured_Status", "")).upper()
+            if status == "UNIQUE_MATCH":
+                ok_count += 1
+                continue
+            msg = (
+                f"{row.get('Node','?')}[{row.get('VRF','default')}] "
+                f"{row.get('Local_IP','?')} -> {row.get('Remote_Node','?')} "
+                f"{row.get('Remote_IP','?')} ({row.get('Session_Type','?')}): {status}"
+            )
+            if status in ("HALF_OPEN", "NO_LOCAL_IP", "UNKNOWN_REMOTE"):
+                warn_count += 1
+            else:
+                log(msg, "FAIL")
+                issues_found.append(msg)
+        if warn_count:
+            log(f"bgpSessionCompatibility: {warn_count} session(s) with expected cEOS/MLAG limitations (NO_LOCAL_IP/UNKNOWN_REMOTE/HALF_OPEN).", "WARN")
+        log(f"bgpSessionCompatibility: {ok_count} UNIQUE_MATCH session(s).",
+            "PASS" if ok_count > 0 else "WARN")
+
+    # --- undefinedReferences ---
+    # Columns: File_Name, Struct_Type, Ref_Name, Context, Lines
+    # BGP peer-group types are Batfish parser false positives for EOS → WARN
+    # Other types (route-map, prefix-list, etc.) indicate real missing definitions → blocking
+    log("undefinedReferences...", "STEP")
+    if df_undef.empty:
+        log("undefinedReferences: none found.", "PASS")
+    else:
+        bgp_fp_count = 0
+        for _, row in df_undef.iterrows():
+            struct_type = str(row.get("Struct_Type", "")).lower()
+            msg = (
+                f"Undefined in {row.get('File_Name','?')}: "
+                f"{row.get('Struct_Type','')} '{row.get('Ref_Name','')}' "
+                f"({row.get('Context','')})"
+            )
+            if "bgp" in struct_type:
+                bgp_fp_count += 1
+            else:
+                log(msg, "FAIL")
+                issues_found.append(msg)
+        if bgp_fp_count:
+            log(f"undefinedReferences: {bgp_fp_count} BGP peer-group reference(s) — known cEOS false positive(s).", "WARN")
+        if not issues_found:
+            log("undefinedReferences: no non-BGP undefined references found.", "PASS")
+
+    # --- Write CSVs ---
+    BATFISH_REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    df_init.to_csv( BATFISH_REPORT_DIR / "init_issues.csv",           index=False)
+    df_bgp.to_csv(  BATFISH_REPORT_DIR / "bgp_sessions.csv",          index=False)
+    df_undef.to_csv(BATFISH_REPORT_DIR / "undefined_refs.csv",        index=False)
+    log(f"Reports written to {BATFISH_REPORT_DIR}/", "INFO")
+
+    if issues_found:
+        log(f"Batfish found {len(issues_found)} blocking issue(s).", "FAIL")
+        raise RuntimeError(f"Batfish static analysis FAILED with {len(issues_found)} issue(s).")
+
+    log("Batfish static analysis PASSED — configs look clean.", "PASS")
+
+
 def avd_validate():
     banner("STEP 4: AVD Validate (ANTA)")
     log("Running validation tests...", "STEP")
@@ -330,6 +514,14 @@ def parse_args() -> argparse.Namespace:
         metavar="{always,on-pass,never}",
         help="When to tear down the lab (default: on-pass)",
     )
+    parser.add_argument(
+        "--skip-batfish", action="store_true",
+        help="Skip Batfish static config analysis",
+    )
+    parser.add_argument(
+        "--skip-validate", action="store_true",
+        help="Skip ANTA validation and result parsing (use with --batfish for lab-free checks)",
+    )
     return parser.parse_args()
 
 
@@ -339,8 +531,9 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     args = parse_args()
-    lab_is_up    = False
-    pipeline_ok  = True
+    lab_is_up        = False
+    batfish_started  = False
+    pipeline_ok      = True
 
     def handle_signal(sig, frame):
         print()
@@ -365,26 +558,33 @@ def main():
         if not args.skip_build:
             avd_build()
 
+        if not args.skip_batfish:
+            batfish_started = start_batfish()
+            batfish_analyze()
+
         if not args.skip_deploy:
             avd_deploy()
             wait_for_convergence(args.convergence_wait)
 
-        avd_validate()
+        if not args.skip_validate:
+            avd_validate()
 
-        passed, failed, skipped, failures = parse_results()
-        print_report(passed, failed, skipped, failures)
+            passed, failed, skipped, failures = parse_results()
+            print_report(passed, failed, skipped, failures)
 
-        if failed:
-            pipeline_ok = False
+            if failed:
+                pipeline_ok = False
 
     except subprocess.CalledProcessError as e:
         log(f"Step failed (exit {e.returncode})", "FAIL")
         pipeline_ok = False
-    except TimeoutError as e:
+    except (TimeoutError, RuntimeError) as e:
         log(str(e), "FAIL")
         pipeline_ok = False
 
     finally:
+        if batfish_started:
+            stop_batfish()
         should_teardown = (
             args.teardown == "always"
             or (args.teardown == "on-pass" and pipeline_ok)
