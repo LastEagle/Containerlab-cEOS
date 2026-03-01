@@ -59,6 +59,13 @@
         "x": 21,
         "y": -105
       }
+    },
+    {
+      "id": "client3",
+      "position": {
+        "x": 175,
+        "y": 63
+      }
     }
   ],
   "edgeAnnotations": [],

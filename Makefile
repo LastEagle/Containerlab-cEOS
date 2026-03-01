@@ -39,9 +39,9 @@ validate:
 	$(ACT) && ansible-playbook -i $(INV) $(VALIDATE_PLAY)
 
 endpoints:
-	# If scripts live under LABDIR/scripts, keep these paths. Otherwise adjust.
-	sudo docker exec -it clab-lab-client1 sh -lc "$$(cat $(LABDIR)/scripts/endpoints_client1.sh)"
-	sudo docker exec -it clab-lab-client2 sh -lc "$$(cat $(LABDIR)/scripts/endpoints_client2.sh)"
+	sudo docker exec -it clab-lab-client1 sh -lc "$$(cat $(LABDIR)/startup/client1-net.sh)"
+	sudo docker exec -it clab-lab-client2 sh -lc "$$(cat $(LABDIR)/startup/client2-net.sh)"
+	sudo docker exec -it clab-lab-client3 sh -lc "$$(cat $(LABDIR)/startup/client3-net.sh)"
 
 reset: clab-down clab-up
 	@echo "Lab reset complete."

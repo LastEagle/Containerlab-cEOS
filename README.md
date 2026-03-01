@@ -80,12 +80,6 @@ Connect to linux container
 docker exec -it clab-lab-client1 sh
 </pre>
 
-Add ip address
-<pre>
-ip addr add 10.10.11.10/24 dev eth1
-ip addr add 10.10.12.10/24 dev eth2
-</pre>
-
 disconnect from linux container
 <pre>
 ctrl+d
@@ -116,10 +110,13 @@ sudo clab graph -t arista-avd-lab/clab-topo.yml
 ╭──────────────────┬──────────────┬─────────┬────────────────╮
 │       Name       │  Kind/Image  │  State  │ IPv4/6 Address │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
-│ clab-lab-client1 │ linux        │ running │ 172.20.10.2    │
+│ clab-lab-client1 │ linux        │ running │ 172.20.10.4    │
 │                  │ alpine       │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-client2 │ linux        │ running │ 172.20.10.3    │
+│                  │ alpine       │         │ N/A            │
+├──────────────────┼──────────────┼─────────┼────────────────┤
+│ clab-lab-client3 │ linux        │ running │ 172.20.10.2    │
 │                  │ alpine       │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-leaf1   │ ceos         │ running │ 172.20.10.12   │
