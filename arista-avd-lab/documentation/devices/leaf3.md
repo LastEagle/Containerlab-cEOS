@@ -255,6 +255,7 @@ vlan 4094
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | Channel-Group |
 | --------- | ----------- | ---- | ----- | ----------- | ----------- | ------------- |
 | Ethernet2 | SERVER_leaf3-4-server1_PCI1 | *trunk | *11-12,21-22 | *4092 | *- | 2 |
+| Ethernet3 | SERVER_leaf3-4-server2_PCI1 | *trunk | *11-12,21-22 | *4092 | *- | 3 |
 | Ethernet8 | MLAG_leaf4_Ethernet8 | *trunk | *- | *- | *MLAG | 8 |
 | Ethernet9 | MLAG_leaf4_Ethernet9 | *trunk | *- | *- | *MLAG | 8 |
 
@@ -275,6 +276,11 @@ interface Ethernet2
    description SERVER_leaf3-4-server1_PCI1
    no shutdown
    channel-group 2 mode active
+!
+interface Ethernet3
+   description SERVER_leaf3-4-server2_PCI1
+   no shutdown
+   channel-group 3 mode active
 !
 interface Ethernet8
    description MLAG_leaf4_Ethernet8
@@ -310,6 +316,7 @@ interface Ethernet11
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
 | --------- | ----------- | ---- | ----- | ----------- | ------------| --------------------- | ------------------ | ------- | -------- |
 | Port-Channel2 | SERVER_leaf3-4-server1 | trunk | 11-12,21-22 | 4092 | - | - | - | 2 | - |
+| Port-Channel3 | SERVER_leaf3-4-server2_Bond1 | trunk | 11-12,21-22 | 4092 | - | - | - | 3 | - |
 | Port-Channel8 | MLAG_leaf4_Port-Channel8 | trunk | - | - | MLAG | - | - | - | - |
 
 #### Port-Channel Interfaces Device Configuration
@@ -324,6 +331,16 @@ interface Port-Channel2
    switchport mode trunk
    switchport
    mlag 2
+   spanning-tree portfast
+!
+interface Port-Channel3
+   description SERVER_leaf3-4-server2_Bond1
+   no shutdown
+   switchport trunk native vlan 4092
+   switchport trunk allowed vlan 11-12,21-22
+   switchport mode trunk
+   switchport
+   mlag 3
    spanning-tree portfast
 !
 interface Port-Channel8

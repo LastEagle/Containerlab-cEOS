@@ -1,47 +1,54 @@
 # Containerlab-cEOS
 
-This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.02 and docker.  
+This is a lab environment running cEOS in containerlab.  The goal is to build a EVPN-VXLAN topology with Arista AVD / Ansible for deployment.  Environment is built with Ubuntu 24.04 and docker.
 
 ## Installation
-#### Install containerlab and docker
+## Install containerlab and docker
 Run this script on a clean ubuntu machine, provides everything including docker.
 <pre>
 curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
 </pre>
 
-#### Download the cEOS image from arista and import it to docker. I used version 4.34.0F.
+## Download the cEOS image from arista and import it to docker. I used version 4.34.4M.
 <pre>
 docker import cEOS-lab-4.34.4M.tar.xz ceos:4.34.4M
 </pre>
 
-#### Create containerlab python virtual-env for ansible
+## Create the Python virtual environment
+The Makefile expects the venv here: arista-avd-lab/cenv
 <pre>
-python3 -m venv cvenv
+python3 -m venv arista-avd-lab/cenv
+source arista-avd-lab/cenv/bin/activate
 </pre>
-Activate the virtual-env
 <pre>
-source cvenv/bin/activate
+pip install -U pip
+</pre>
+Install Python dependencies and Ansible collections:
+<pre>
+pip install -r requirements.txt
+ansible-galaxy collection install arista.avd arista.eos
 </pre>
 
 
 ## Deploy the lab
 1) Create lab in containerlab
 <pre>
-sudo clab deploy -t clab-topo.yml
+sudo clab deploy -t arista-avd-lab/clab-topo.yml
 </pre>
 
-Switches will load with a basic start configuration from the startup folder.
+Switches load with a basic startup configuration from arista-avd-lab/startup/.
 2) Build EVPN-VXLAN configuration using ansible.
 <pre>
-ansible-playbook playbooks/build.yml
+ansible-playbook -i arista-avd-lab/inventory.yml arista-avd-lab/playbooks/build.yml
 </pre>
 
-3) Build EVPN-VXLAN configuration using ansible.
+3) Deploy the configuration (eAPI)
 <pre>
-ansible-playbook playbooks/deploy.yml
+ansible-playbook -i arista-avd-lab/inventory.yml arista-avd-lab/playbooks/deploy.yml
 </pre>
 
-4) Log in switches and validate.
+4) Validate on a switch (example)
+Log in switches and validate. (example)
 <pre>
 leaf1#sh ip bgp summary 
 BGP summary information for VRF default
@@ -54,14 +61,15 @@ Neighbor Status Codes: m - Under maintenance
 </pre>
 
 
-5) Validate with ansible.  Results stored in reports/
+5) Validate with Ansible
+Results are stored in arista-avd-lab/reports/:
 <pre>
-ansible-playbook playbooks/validate.yml
+ansible-playbook -i arista-avd-lab/inventory.yml arista-avd-lab/playbooks/validate.yml
 </pre>
 
 
 ## Useful information
-Default user/password for cEOS - admin//admin
+Default user/password for cEOS - admin / admin
 Connect to cEOS
 <pre>
 ssh admin@clab-lab-leaf1
@@ -78,29 +86,29 @@ ip addr add 10.10.11.10/24 dev eth1
 ip addr add 10.10.12.10/24 dev eth2
 </pre>
 
-disconnect form linux container
+disconnect from linux container
 <pre>
 ctrl+d
 </pre>
 
 launch containerlab
 <pre>
-sudo clab deploy -t clab-topo.yml
+sudo clab deploy -t arista-avd-lab/clab-topo.yml
 </pre>
 
 rebuild running lab
 <pre>
-sudo clab deploy -t clab-topo.yml --reconfigure
+sudo clab deploy -t arista-avd-lab/clab-topo.yml --reconfigure
 </pre>
 
 destroy lab
 <pre>
-sudo clab destroy -t clab-topo.yml
+sudo clab destroy -t arista-avd-lab/clab-topo.yml
 </pre>
 
 Graph the lab - creates an html page at http://0.0.0.0:50080
 <pre>
-sudo clab graph -t clab-topo.yml
+sudo clab graph -t arista-avd-lab/clab-topo.yml
 </pre>
 
 # Preconfigured devices and mgmt interface ip address.
@@ -115,22 +123,22 @@ sudo clab graph -t clab-topo.yml
 │                  │ alpine       │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-leaf1   │ ceos         │ running │ 172.20.10.12   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-leaf2   │ ceos         │ running │ 172.20.10.13   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-leaf3   │ ceos         │ running │ 172.20.10.14   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-leaf4   │ ceos         │ running │ 172.20.10.15   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-spine1  │ ceos         │ running │ 172.20.10.10   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ├──────────────────┼──────────────┼─────────┼────────────────┤
 │ clab-lab-spine2  │ ceos         │ running │ 172.20.10.11   │
-│                  │ ceos:4.34.0F │         │ N/A            │
+│                  │ ceos:4.34.4M │         │ N/A            │
 ╰──────────────────┴──────────────┴─────────┴────────────────╯
 </pre>
 
@@ -163,6 +171,7 @@ make validate
 </pre>
 
 6) Bring down lab
+<pre>
 make clab-down
 </pre>
 
@@ -172,6 +181,6 @@ make reset
 </pre>
 
 # Containerlab setup
-Config is definied in clab-topo.yml
+Config is defined in clab-topo.yml
 
-Define your switches and hosts and ip addresses.  Managment interfaces are assigned to Managment0 in containerlab. This is definied in group_vars/DC1/dc1.yml as mgmt_interface: Management0.
+Define your switches and hosts and ip addresses.  Managment interfaces are assigned to Managment0 in containerlab. This is defined in group_vars/DC1/dc1.yml as mgmt_interface: Management0.
