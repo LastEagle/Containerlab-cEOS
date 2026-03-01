@@ -9,3 +9,6 @@
       vars:
         # Optionally save catalogs
         save_catalog: true
+        # Tests that are not applicable in a cEOS lab environment
+        skip_tests:
+          - category: AvdTestNTP

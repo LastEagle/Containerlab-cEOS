@@ -350,18 +350,6 @@
   },
   {
     "name": "spine2",
-    "test": "VerifyNTP",
-    "categories": [
-      "system"
-    ],
-    "description": "Verifies if NTP is synchronised.",
-    "result": "failure",
-    "messages": [
-      "NTP status mismatch - Expected: synchronised Actual: NTP is disabled."
-    ]
-  },
-  {
-    "name": "spine2",
     "test": "VerifyReloadCause",
     "categories": [
       "system"

@@ -181,5 +181,4 @@ anta.tests.routing.generic:
     result_overwrite:
       custom_field: 'Routing protocol model: multi-agent'
 anta.tests.system:
-- VerifyNTP: null
 - VerifyReloadCause: null

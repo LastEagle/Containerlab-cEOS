@@ -12,7 +12,7 @@ VALIDATE_PLAY ?= $(LABDIR)/playbooks/validate.yml
 VENV ?= arista-avd-lab/cenv
 ACT  := . $(VENV)/bin/activate
 
-.PHONY: venv deps clab-up clab-down build deploy validate endpoints reset all
+.PHONY: venv deps clab-up clab-down build deploy validate endpoints reset all pipeline
 
 venv:
 	python3 -m venv $(VENV)
@@ -27,7 +27,7 @@ clab-up:
 	sudo containerlab deploy -t $(TOPO)
 
 clab-down:
-	sudo containerlab destroy -t $(TOPO) --cleanup
+	sudo containerlab destroy -t $(TOPO)
 
 build:
 	$(ACT) && ansible-playbook -i $(INV) $(BUILD_PLAY)
@@ -47,3 +47,9 @@ reset: clab-down clab-up
 	@echo "Lab reset complete."
 
 all: build deploy validate
+
+# Full pipeline: up → build → deploy → validate → down
+# Override teardown behaviour: make pipeline TEARDOWN=always|on-pass|never
+TEARDOWN ?= on-pass
+pipeline:
+	python3 pipeline.py --teardown $(TEARDOWN)

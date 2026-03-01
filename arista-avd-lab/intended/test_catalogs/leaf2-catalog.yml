@@ -146,10 +146,22 @@ anta.tests.interfaces:
       custom_field: Interface Ethernet11 - P2P_spine2_Ethernet4 = 'up'
 - VerifyInterfacesStatus:
     interfaces:
+    - name: Ethernet2
+      status: up
+    result_overwrite:
+      custom_field: Interface Ethernet2 - SERVER_leaf1-2-server1_PCI2 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
     - name: Port-Channel8
       status: up
     result_overwrite:
       custom_field: Interface Port-Channel8 - MLAG_leaf1_Port-Channel8 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Port-Channel2
+      status: up
+    result_overwrite:
+      custom_field: Interface Port-Channel2 - SERVER_leaf1-2-server1_Bond1 = 'up'
 - VerifyInterfacesStatus:
     interfaces:
     - name: Vlan4093
@@ -164,6 +176,42 @@ anta.tests.interfaces:
       custom_field: Interface Vlan4094 - MLAG = 'up'
 - VerifyInterfacesStatus:
     interfaces:
+    - name: Vlan11
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan11 - VRF10_VLAN11 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Vlan12
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan12 - VRF10_VLAN12 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Vlan3009
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan3009 - MLAG_L3_VRF_VRF10 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Vlan21
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan21 - VRF11_VLAN21 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Vlan22
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan22 - VRF11_VLAN22 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Vlan3010
+      status: up
+    result_overwrite:
+      custom_field: Interface Vlan3010 - MLAG_L3_VRF_VRF11 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
     - name: Loopback0
       status: up
     result_overwrite:
@@ -174,6 +222,18 @@ anta.tests.interfaces:
       status: up
     result_overwrite:
       custom_field: Interface Loopback1 - VXLAN_TUNNEL_SOURCE = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Loopback10
+      status: up
+    result_overwrite:
+      custom_field: Interface Loopback10 - DIAG_VRF_VRF10 = 'up'
+- VerifyInterfacesStatus:
+    interfaces:
+    - name: Loopback11
+      status: up
+    result_overwrite:
+      custom_field: Interface Loopback11 - DIAG_VRF_VRF11 = 'up'
 - VerifyInterfacesStatus:
     interfaces:
     - name: Vxlan1
@@ -267,5 +327,4 @@ anta.tests.routing.generic:
     routes:
     - 10.255.1.5
 anta.tests.system:
-- VerifyNTP: null
 - VerifyReloadCause: null

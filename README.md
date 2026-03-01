@@ -177,6 +177,100 @@ Optional: full reset
 make reset
 </pre>
 
+# Pipeline Orchestrator (pipeline.py)
+
+`pipeline.py` automates the full digital twin workflow in a single command:
+
+```
+clab-up → AVD build → AVD deploy → ANTA validate → report → clab-down
+```
+
+The lab is torn down automatically on a passing run. On failure it is left running so you can inspect the devices.
+
+## Prerequisites
+
+`containerlab` must be allowed to run without a password prompt. Add a sudoers entry once:
+<pre>
+echo "netlab ALL=(ALL) NOPASSWD: /usr/bin/containerlab" | sudo tee /etc/sudoers.d/containerlab
+sudo chmod 440 /etc/sudoers.d/containerlab
+</pre>
+
+## Running the pipeline
+
+Full run (spin up lab, build, deploy, validate, tear down on pass):
+<pre>
+python3 pipeline.py
+</pre>
+
+Or via Make:
+<pre>
+make pipeline
+</pre>
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--skip-clab-up` | Skip ContainerLab deploy (use when lab is already running) |
+| `--skip-build` | Skip AVD build step |
+| `--skip-deploy` | Skip AVD deploy step |
+| `--teardown always\|on-pass\|never` | Control when the lab is torn down (default: `on-pass`) |
+
+Examples:
+<pre>
+# Lab already running — just build, deploy, validate
+python3 pipeline.py --skip-clab-up
+
+# Keep lab running regardless of result (useful for debugging)
+python3 pipeline.py --teardown never
+
+# Always tear down even on failure
+python3 pipeline.py --teardown always
+
+# Makefile: keep lab running
+make pipeline TEARDOWN=never
+</pre>
+
+## Expected output
+
+A passing run looks like:
+<pre>
+==============================================================
+  AVD Digital Twin Pipeline  [2026-03-01 09:55:31]
+==============================================================
+[09:55:31] [>>] Deploying topology...
+[09:55:39] [OK] Build complete.
+[09:55:49] [OK] Deploy complete.
+[09:55:59] [OK] Validation playbook complete.
+
+==============================================================
+  VALIDATION REPORT
+==============================================================
+[09:55:59] [  ] Total:   272
+[09:55:59] [OK] Passed:  242
+[09:55:59] [  ] Skipped: 24
+[09:55:59] [OK] Failed:  0
+[09:55:59] [~~] Ignored: 6 (expected in cEOS lab — see IGNORED_TESTS)
+
+==============================================================
+  PIPELINE PASSED
+==============================================================
+</pre>
+
+Exit code is `0` on pass, `1` on failure.
+
+## Skipped tests (cEOS lab)
+
+The following tests are not applicable in a cEOS lab environment and are skipped via `skip_tests` in `arista-avd-lab/playbooks/validate.yml`. They will not appear as failures in the report.
+
+| Test | Reason |
+|------|--------|
+| `VerifyNTP` | NTP is disabled in cEOS lab |
+
+To add more skipped tests, edit the `skip_tests` list in `validate.yml`.
+
+Results are written to `arista-avd-lab/reports/FABRIC-state.csv` after each validate run.
+
 # Containerlab setup
 Config is defined in clab-topo.yml
 
