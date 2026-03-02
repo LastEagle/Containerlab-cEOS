@@ -547,12 +547,22 @@ def main():
 
     banner(f"AVD Digital Twin Pipeline  [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
 
+    # --- Argument warnings ---
+    if args.skip_clab_up and not args.skip_deploy:
+        log("--skip-clab-up set: assuming lab is already running — deploy will fail if devices are not reachable.", "WARN")
+    if args.skip_build and not args.skip_batfish:
+        log("--skip-build set: Batfish will analyse existing configs in intended/configs — may be stale.", "WARN")
+    if args.skip_build and not args.skip_deploy:
+        log("--skip-build set: deploying existing configs in intended/configs — may be stale.", "WARN")
+
     try:
         if not args.skip_clab_up:
             clab_up()
             wait_for_devices()
         else:
             log("Skipping clab-up (--skip-clab-up)", "WARN")
+            if not args.skip_deploy:
+                wait_for_devices()
         lab_is_up = True
 
         if not args.skip_build:
