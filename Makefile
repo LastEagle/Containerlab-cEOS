@@ -53,16 +53,16 @@ all: build deploy validate
 # Override teardown behaviour: make pipeline TEARDOWN=always|on-pass|never
 TEARDOWN ?= on-pass
 pipeline:
-	python3 pipeline.py --teardown $(TEARDOWN)
+	$(ACT) && python3 pipeline.py --teardown $(TEARDOWN)
 
 # Skip Batfish (quick iteration, no static analysis gate)
 pipeline-no-batfish:
-	python3 pipeline.py --skip-batfish --teardown $(TEARDOWN)
+	$(ACT) && python3 pipeline.py --skip-batfish --teardown $(TEARDOWN)
 
 # Standalone Batfish analysis — no live lab required.
 # Build configs first: make build && make batfish
 batfish:
-	python3 pipeline.py \
+	$(ACT) && python3 pipeline.py \
 		--skip-clab-up \
 		--skip-build \
 		--skip-deploy \

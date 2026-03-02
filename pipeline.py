@@ -251,8 +251,7 @@ def wait_for_convergence(timeout: int = 120, interval: int = 10):
 
         if not busy:
             log("BGP sessions converged on all devices.", "PASS")
-            log("Waiting 15s for data-plane (ARP/EVPN) to settle...", "INFO")
-            time.sleep(15)
+            wait_for_evpn_convergence()
             return
 
         remaining = int(deadline - time.time())
@@ -261,6 +260,99 @@ def wait_for_convergence(timeout: int = 120, interval: int = 10):
         time.sleep(interval)
 
     log("BGP convergence timeout — proceeding anyway.", "WARN")
+
+
+def wait_for_evpn_convergence(timeout: int = 120, interval: int = 5):
+    """Wait until the EVPN overlay has fully settled before running ANTA.
+
+    Queue-empty checks are racy — cEOS generates burst after burst of EVPN
+    Type-2 advertisements as configs apply and the FIB is programmed.  A more
+    reliable signal is *prefix-count stability*: when prefixReceived stops
+    changing between polls the topology has actually converged.
+
+    Two phases:
+      Phase 1 — sessions Established, prefixReceived > 0, counts stable × 2.
+      Phase 2 — 10 s FIB wait, then counts stable × 2 again (FIB programming
+                 triggers a second wave of Type-2 advertisements).
+    """
+    devices = get_fabric_hosts()
+    user, password = get_deployed_credentials()
+    token = base64.b64encode(f"{user}:{password}".encode()).decode()
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+
+    payload = json.dumps({
+        "jsonrpc": "2.0", "method": "runCmds",
+        "params": {"version": 1, "cmds": ["show bgp evpn summary"]}, "id": 1,
+    }).encode()
+
+    def _snapshot() -> tuple[dict, list[str]]:
+        """Return ({host: {peer: prefixReceived}}, [issue strings]).
+
+        Issues are raised for: sessions not Established, prefixReceived == 0,
+        or outMsgQueue > 0 (pending reflections not yet sent).
+        Prefix-count stability catches new advertisements; queue checks catch
+        in-flight reflections — both are required for true convergence.
+        """
+        counts, issues = {}, []
+        for hostname, ip in sorted(devices.items()):
+            req = urllib.request.Request(
+                f"https://{ip}/command-api",
+                data=payload,
+                headers={"Content-Type": "application/json", "Authorization": f"Basic {token}"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, context=ssl_ctx, timeout=5) as resp:
+                    data = json.loads(resp.read())
+                peers = data["result"][0].get("vrfs", {}).get("default", {}).get("peers", {})
+                if not peers:
+                    issues.append(f"{hostname}: no EVPN peers yet")
+                    continue
+                counts[hostname] = {}
+                for peer, info in peers.items():
+                    state    = info.get("peerState", "")
+                    prefixes = info.get("prefixReceived", 0)
+                    outq     = info.get("outMsgQueue", 0)
+                    counts[hostname][peer] = prefixes
+                    if state != "Established" or prefixes == 0:
+                        issues.append(f"{hostname}→{peer} state={state} prefixes={prefixes}")
+                    elif outq > 0:
+                        issues.append(f"{hostname}→{peer} OutQ={outq} (reflecting)")
+            except Exception:
+                pass  # device unreachable — skip
+        return counts, issues
+
+    def _wait_stable(label: str, phase_timeout: int):
+        """Require 2 consecutive polls where queues are empty AND prefix counts unchanged."""
+        deadline = time.time() + phase_timeout
+        prev, consecutive = None, 0
+        log(f"{label} — polling {len(devices)} devices (timeout: {phase_timeout}s)...", "STEP")
+        while time.time() < deadline:
+            counts, issues = _snapshot()
+            if not issues and counts == prev:
+                consecutive += 1
+                if consecutive >= 2:
+                    log(f"{label} — stable (queues empty, prefix counts unchanged).", "PASS")
+                    return
+                log(f"{label} — clean ({consecutive}/2)...", "INFO")
+            else:
+                consecutive = 0
+                remaining = int(deadline - time.time())
+                for entry in issues:
+                    log(f"  {entry} ({remaining}s left)", "INFO")
+            prev = counts if not issues else None
+            time.sleep(interval)
+        log(f"{label} — timeout, proceeding anyway.", "WARN")
+
+    # Phase 1: wait for EVPN prefix counts to stabilise
+    _wait_stable("Phase 1: EVPN convergence", timeout)
+
+    # Phase 2: FIB install triggers a second wave of Type-2 advertisements — wait again
+    log("Waiting 10s for FIB programming...", "INFO")
+    time.sleep(10)
+    _wait_stable("Phase 2: post-FIB stability", 60)
 
 
 BATFISH_CONTAINER = "batfish-pipeline"

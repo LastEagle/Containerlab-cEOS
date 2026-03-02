@@ -8,12 +8,10 @@
       ansible.builtin.import_role:
         name: arista.avd.anta_runner
       vars:
-        # Tests not applicable in a cEOS lab environment
         avd_catalogs_filters:
           - skip_tests:
               - VerifyNTP               # NTP disabled in cEOS lab
               - VerifyInterfaceDiscards # Management0 always has inDiscards in containerlab
               - VerifyLoggingErrors     # Benign syslog errors during cEOS startup
-      # anta_runner fails the task when tests fail; ignore_errors lets
-      # pipeline.py parse the CSV and determine pass/fail from test counts.
+              - VerifyRunningConfigDiffs # cEOS kernel adds router multicast to running config
       ignore_errors: true
