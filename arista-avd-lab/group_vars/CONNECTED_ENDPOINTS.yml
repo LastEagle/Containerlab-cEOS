@@ -36,6 +36,7 @@ servers:
         mode: trunk
         spanning_tree_portfast: edge
         port_channel:
+          endpoint_port_channel: Bond1
           mode: active
 
   - name: leaf3-4-server2

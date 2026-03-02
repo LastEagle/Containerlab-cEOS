@@ -182,7 +182,7 @@ make reset
 `pipeline.py` automates the full digital twin workflow in a single command:
 
 ```
-clab-up → AVD build → AVD deploy → ANTA validate → report → clab-down
+clab-up → AVD build → Batfish static analysis → AVD deploy → ANTA validate → report → clab-down
 ```
 
 The lab is torn down automatically on a passing run. On failure it is left running so you can inspect the devices.
@@ -214,21 +214,29 @@ make pipeline
 | `--skip-clab-up` | Skip ContainerLab deploy (use when lab is already running) |
 | `--skip-build` | Skip AVD build step |
 | `--skip-deploy` | Skip AVD deploy step |
+| `--skip-batfish` | Skip Batfish static analysis |
+| `--skip-validate` | Skip ANTA validation and result parsing |
 | `--teardown always\|on-pass\|never` | Control when the lab is torn down (default: `on-pass`) |
 
 Examples:
 <pre>
-# Lab already running — just build, deploy, validate
+# Full pipeline (Batfish runs by default)
+python3 pipeline.py
+
+# Skip Batfish for a quick iteration
+python3 pipeline.py --skip-batfish
+
+# Lab already running — just build, Batfish, deploy, validate
 python3 pipeline.py --skip-clab-up
 
 # Keep lab running regardless of result (useful for debugging)
 python3 pipeline.py --teardown never
 
-# Always tear down even on failure
-python3 pipeline.py --teardown always
-
 # Makefile: keep lab running
 make pipeline TEARDOWN=never
+
+# Makefile: skip Batfish
+make pipeline-no-batfish
 </pre>
 
 ## Expected output
@@ -236,20 +244,23 @@ make pipeline TEARDOWN=never
 A passing run looks like:
 <pre>
 ==============================================================
-  AVD Digital Twin Pipeline  [2026-03-01 11:44:07]
+  AVD Digital Twin Pipeline  [2026-03-02 14:38:31]
 ==============================================================
-[11:44:07] [>>] Deploying topology...
-[11:45:27] [OK] Build complete.
-[11:45:39] [OK] Deploy complete.
-[11:45:46] [OK] Validation playbook complete.
+[14:38:31] [>>] Deploying topology...
+[14:39:43] [OK] All devices ready.
+[14:39:50] [OK] Build complete.
+[14:39:52] [OK] Batfish static analysis PASSED — configs look clean.
+[14:40:04] [OK] Deploy complete.
+[14:40:05] [OK] BGP sessions converged on all devices.
+[14:40:28] [OK] Validation playbook complete.
 
 ==============================================================
   VALIDATION REPORT
 ==============================================================
-[11:45:46] [  ] Total:   168
-[11:45:46] [OK] Passed:  132
-[11:45:46] [  ] Skipped: 36
-[11:45:46] [OK] Failed:  0
+[14:40:28] [  ] Total:   184
+[14:40:28] [OK] Passed:  148
+[14:40:28] [  ] Skipped: 36
+[14:40:28] [OK] Failed:  0
 
 ==============================================================
   PIPELINE PASSED
@@ -288,66 +299,65 @@ BGP `HALF_OPEN` sessions (MLAG iBGP peer-groups without a matching remote config
 
 ## Prerequisites
 
-Batfish runs as a Docker container. Start it once before using the Batfish targets:
-
-<pre>
-docker run -d -p 9996:9996 batfish/allinone
-</pre>
-
 Install the Python client (included in `requirements.txt`, installed via `make deps`):
 
 <pre>
 make deps
 </pre>
 
+Docker must be running — the pipeline starts and stops the Batfish container automatically. No manual `docker run` required.
+
 ## Usage
 
-**Lab-free static analysis** (build configs, then analyse — no cEOS containers needed):
+**Full pipeline** — Batfish runs by default between build and deploy:
+
+<pre>
+make pipeline
+</pre>
+
+**Skip Batfish** for a quick iteration:
+
+<pre>
+make pipeline-no-batfish
+</pre>
+
+**Standalone lab-free analysis** (build configs first, then analyse without spinning up cEOS):
 
 <pre>
 make build && make batfish
 </pre>
 
-**Full pipeline with Batfish gate** (Batfish runs between build and deploy; pipeline aborts on issues):
-
-<pre>
-python3 pipeline.py --batfish
-</pre>
-
-Or via Make:
-
-<pre>
-make pipeline TEARDOWN=never
-</pre>
-
-then add `--batfish` directly when calling `pipeline.py`.
-
-## New flags
+## Flags
 
 | Flag | Description |
 |------|-------------|
-| `--batfish` | Run Batfish static analysis between AVD build and deploy |
-| `--skip-validate` | Skip ANTA validation and result parsing (useful for lab-free Batfish-only runs) |
+| `--skip-batfish` | Skip Batfish static analysis |
+| `--skip-validate` | Skip ANTA validation and result parsing |
 
 ## Expected output (passing)
 
 <pre>
 ==============================================================
+  Batfish — Starting container
+==============================================================
+[14:39:50] [  ] Starting Batfish container (batfish/allinone)...
+[14:39:55] [OK] Batfish container ready.
+
+==============================================================
   STEP 2b: Batfish — Static Config Analysis
 ==============================================================
-[12:00:01] [>>] Checking Batfish service at localhost:9996...
-[12:00:01] [  ] Batfish reachable. Initialising snapshot...
-[12:00:03] [  ] Snapshot loaded from: .../intended/configs
-[12:00:03] [>>] Running initIssues...
-[12:00:04] [OK] initIssues: no issues.
-[12:00:04] [>>] Running bgpSessionCompatibility...
-[12:00:05] [OK] bgpSessionCompatibility: 12 UNIQUE_MATCH session(s).
-[12:00:05] [>>] Running undefinedReferences...
-[12:00:06] [OK] undefinedReferences: none found.
-[12:00:06] [OK] Batfish static analysis PASSED — configs look clean.
+[14:39:55] [  ] Batfish reachable. Staging 6 config(s) for snapshot upload...
+[14:39:56] [  ] Snapshot loaded from: .../intended/configs
+[14:39:56] [>>] Querying Batfish (initIssues, bgpSessionCompatibility, undefinedReferences)...
+[14:39:56] [~~] initIssues: 122 parse warning(s) — unrecognised EOS syntax (expected for cEOS).
+[14:39:56] [~~] bgpSessionCompatibility: 16 session(s) with expected cEOS/MLAG limitations.
+[14:39:56] [OK] undefinedReferences: no non-BGP undefined references found.
+[14:39:56] [OK] Batfish static analysis PASSED — configs look clean.
 </pre>
 
-Exit code is `0` on pass, `1` on any blocking issue (ERROR severity initIssue, non-HALF_OPEN BGP mismatch, or undefined reference).
+The parse warnings and BGP limitations are expected for cEOS AVD configs — they are Batfish parser gaps with EOS syntax, not real config errors. The pipeline only fails on genuine issues: non-BGP undefined references (missing route-maps, prefix-lists) or unexpected BGP session mismatches.
+
+CSV reports are written to `arista-avd-lab/batfish/reports/` after each run.
 
 # Containerlab setup
 Config is defined in clab-topo.yml
