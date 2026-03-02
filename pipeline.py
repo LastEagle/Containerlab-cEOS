@@ -8,11 +8,13 @@ import argparse
 import base64
 import csv
 import json
+import shutil
 import signal
 import socket
 import ssl
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 import yaml
@@ -27,6 +29,9 @@ RESULTS_CSV   = LAB_DIR / "anta" / "reports" / "anta_report.csv"
 FABRIC_VARS   = LAB_DIR / "group_vars" / "FABRIC" / "fabric.yml"
 CONFIGS_DIR        = LAB_DIR / "intended" / "configs"
 BATFISH_REPORT_DIR = LAB_DIR / "batfish" / "reports"
+PIPELINE_RUNS_DIR  = LAB_DIR / "pipeline-runs"
+HISTORY_JSON       = PIPELINE_RUNS_DIR / "history.json"
+LATEST_MD          = PIPELINE_RUNS_DIR / "latest.md"
 
 BUILD_PLAY    = Path("playbooks/build.yml")
 DEPLOY_PLAY   = Path("playbooks/deploy.yml")
@@ -124,6 +129,16 @@ def get_deployed_credentials() -> tuple[str, str]:
     user = fabric.get("ansible_user", "ansible")
     password = fabric.get("ansible_password", "ansible")
     return user, password
+
+
+def get_git_commit() -> str:
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, cwd=REPO_ROOT, check=True,
+        ).stdout.strip()
+    except Exception:
+        return "unknown"
 
 
 def wait_for_devices(timeout: int = 300, interval: int = 10):
@@ -312,9 +327,6 @@ def batfish_analyze():
     if not CONFIGS_DIR.exists() or not any(CONFIGS_DIR.glob("*.cfg")):
         raise RuntimeError(f"No .cfg files found in {CONFIGS_DIR}. Run 'make build' first.")
 
-    import shutil
-    import tempfile
-
     cfgs = list(CONFIGS_DIR.glob("*.cfg"))
     log(f"Batfish reachable. Staging {len(cfgs)} config(s) for snapshot upload...", "INFO")
 
@@ -337,7 +349,14 @@ def batfish_analyze():
     df_bgp   = bf.q.bgpSessionCompatibility().answer().frame()
     df_undef = bf.q.undefinedReferences().answer().frame()
 
-    issues_found = []
+    issues_found    = []
+    init_warnings   = 0
+    init_errors     = 0
+    bgp_ok          = 0
+    bgp_warnings    = 0
+    bgp_failures    = 0
+    undef_fp        = 0
+    undef_blocking  = 0
 
     # --- initIssues ---
     # Columns: Nodes, Source_Lines, Type, Details, Line_Text, Parser_Context
@@ -350,10 +369,12 @@ def batfish_analyze():
     else:
         errors   = df_init[df_init["Type"] == "Parse error"]
         warnings = df_init[df_init["Type"] != "Parse error"]
+        init_warnings = len(warnings)
+        init_errors   = len(errors)
         if not warnings.empty:
-            log(f"initIssues: {len(warnings)} parse warning(s) — unrecognised EOS syntax (expected for cEOS).", "WARN")
+            log(f"initIssues: {init_warnings} parse warning(s) — unrecognised EOS syntax (expected for cEOS).", "WARN")
         if not errors.empty:
-            log(f"initIssues: {len(errors)} parse error(s) — Batfish EOS parser limitation(s) (expected for cEOS).", "WARN")
+            log(f"initIssues: {init_errors} parse error(s) — Batfish EOS parser limitation(s) (expected for cEOS).", "WARN")
         if warnings.empty and errors.empty:
             log("initIssues: no issues.", "PASS")
 
@@ -367,12 +388,10 @@ def batfish_analyze():
     if df_bgp.empty:
         log("bgpSessionCompatibility: no sessions found (check snapshot).", "WARN")
     else:
-        ok_count   = 0
-        warn_count = 0
         for _, row in df_bgp.iterrows():
             status = str(row.get("Configured_Status", "")).upper()
             if status == "UNIQUE_MATCH":
-                ok_count += 1
+                bgp_ok += 1
                 continue
             msg = (
                 f"{row.get('Node','?')}[{row.get('VRF','default')}] "
@@ -380,14 +399,15 @@ def batfish_analyze():
                 f"{row.get('Remote_IP','?')} ({row.get('Session_Type','?')}): {status}"
             )
             if status in ("HALF_OPEN", "NO_LOCAL_IP", "UNKNOWN_REMOTE"):
-                warn_count += 1
+                bgp_warnings += 1
             else:
+                bgp_failures += 1
                 log(msg, "FAIL")
                 issues_found.append(msg)
-        if warn_count:
-            log(f"bgpSessionCompatibility: {warn_count} session(s) with expected cEOS/MLAG limitations (NO_LOCAL_IP/UNKNOWN_REMOTE/HALF_OPEN).", "WARN")
-        log(f"bgpSessionCompatibility: {ok_count} UNIQUE_MATCH session(s).",
-            "PASS" if ok_count > 0 else "WARN")
+        if bgp_warnings:
+            log(f"bgpSessionCompatibility: {bgp_warnings} session(s) with expected cEOS/MLAG limitations (NO_LOCAL_IP/UNKNOWN_REMOTE/HALF_OPEN).", "WARN")
+        log(f"bgpSessionCompatibility: {bgp_ok} UNIQUE_MATCH session(s).",
+            "PASS" if bgp_ok > 0 else "WARN")
 
     # --- undefinedReferences ---
     # Columns: File_Name, Struct_Type, Ref_Name, Context, Lines
@@ -397,7 +417,6 @@ def batfish_analyze():
     if df_undef.empty:
         log("undefinedReferences: none found.", "PASS")
     else:
-        bgp_fp_count = 0
         for _, row in df_undef.iterrows():
             struct_type = str(row.get("Struct_Type", "")).lower()
             msg = (
@@ -406,27 +425,40 @@ def batfish_analyze():
                 f"({row.get('Context','')})"
             )
             if "bgp" in struct_type:
-                bgp_fp_count += 1
+                undef_fp += 1
             else:
+                undef_blocking += 1
                 log(msg, "FAIL")
                 issues_found.append(msg)
-        if bgp_fp_count:
-            log(f"undefinedReferences: {bgp_fp_count} BGP peer-group reference(s) — known cEOS false positive(s).", "WARN")
+        if undef_fp:
+            log(f"undefinedReferences: {undef_fp} BGP peer-group reference(s) — known cEOS false positive(s).", "WARN")
         if not issues_found:
             log("undefinedReferences: no non-BGP undefined references found.", "PASS")
 
     # --- Write CSVs ---
     BATFISH_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    df_init.to_csv( BATFISH_REPORT_DIR / "init_issues.csv",           index=False)
-    df_bgp.to_csv(  BATFISH_REPORT_DIR / "bgp_sessions.csv",          index=False)
-    df_undef.to_csv(BATFISH_REPORT_DIR / "undefined_refs.csv",        index=False)
-    log(f"Reports written to {BATFISH_REPORT_DIR}/", "INFO")
+    df_init.to_csv( BATFISH_REPORT_DIR / "init_issues.csv",    index=False)
+    df_bgp.to_csv(  BATFISH_REPORT_DIR / "bgp_sessions.csv",   index=False)
+    df_undef.to_csv(BATFISH_REPORT_DIR / "undefined_refs.csv", index=False)
+    log(f"Batfish CSVs written to {BATFISH_REPORT_DIR}/", "INFO")
+
+    summary = {
+        "init_warnings":  init_warnings,
+        "init_errors":    init_errors,
+        "bgp_ok":         bgp_ok,
+        "bgp_warnings":   bgp_warnings,
+        "bgp_failures":   bgp_failures,
+        "undef_fp":       undef_fp,
+        "undef_blocking": undef_blocking,
+        "blocking_issues": len(issues_found),
+    }
 
     if issues_found:
         log(f"Batfish found {len(issues_found)} blocking issue(s).", "FAIL")
-        raise RuntimeError(f"Batfish static analysis FAILED with {len(issues_found)} issue(s).")
+    else:
+        log("Batfish static analysis PASSED — configs look clean.", "PASS")
 
-    log("Batfish static analysis PASSED — configs look clean.", "PASS")
+    return summary
 
 
 def avd_validate():
@@ -481,6 +513,157 @@ def print_report(passed: int, failed: int, skipped: int, failures: list[dict]):
 
 
 # ---------------------------------------------------------------------------
+# Pipeline report artifact
+# ---------------------------------------------------------------------------
+
+def _fmt_duration(seconds: int) -> str:
+    mins, secs = divmod(seconds, 60)
+    return f"{mins}m {secs}s" if mins else f"{secs}s"
+
+
+def _build_md(report: dict, history: list) -> str:
+    """Return a GFM Markdown report: run history + full detail of the latest run."""
+    ICONS = {"PASS": "OK", "FAIL": "FAIL", "SKIP": "--", "NOT_RUN": "  "}
+
+    ts       = report.get("timestamp", "").replace("T", " ")
+    result   = report.get("result", "UNKNOWN")
+    duration = _fmt_duration(report.get("duration_s", 0))
+    commit   = report.get("git_commit", "unknown")
+    steps    = report.get("steps", {})
+    batfish  = report.get("batfish")
+    anta     = report.get("anta")
+
+    lines = []
+
+    # --- Header ---
+    lines.append(f"# AVD Pipeline Report — {result}")
+    lines.append("")
+    lines.append(f"**{ts}** | Duration: {duration} | Commit: `{commit}`")
+    lines.append("")
+
+    # --- Run history table ---
+    step_names = list(steps.keys())
+    header_cells = " | ".join(s.replace("_", " ").title() for s in step_names)
+    lines.append(f"## Run History (last {len(history)})")
+    lines.append("")
+    lines.append(f"| Timestamp | Result | Commit | Duration | {header_cells} | BF Issues | ANTA |")
+    lines.append(f"|-----------|--------|--------|----------|{'|'.join('---' for _ in step_names)}|-----------|------|")
+
+    for entry in reversed(history):  # newest first
+        e_ts     = entry.get("timestamp", "").replace("T", " ")
+        e_res    = entry.get("result", "?")
+        e_dur    = _fmt_duration(entry.get("duration_s", 0))
+        e_commit = entry.get("git_commit", "?")
+        e_steps  = entry.get("steps", {})
+        e_bf     = entry.get("batfish_blocking")
+        e_anta_p = entry.get("anta_passed")
+        e_anta_f = entry.get("anta_failed")
+
+        step_cells = " | ".join(ICONS.get(e_steps.get(s, "NOT_RUN"), "?") for s in step_names)
+        bf_cell    = "—" if e_bf is None else str(e_bf)
+        anta_cell  = "—" if e_anta_p is None else (
+            f"{e_anta_p} pass" + (f" / **{e_anta_f} fail**" if e_anta_f else "")
+        )
+        lines.append(
+            f"| {e_ts} | **{e_res}** | `{e_commit}` | {e_dur} | {step_cells} | {bf_cell} | {anta_cell} |"
+        )
+
+    lines.append("")
+
+    # --- This run step detail ---
+    lines.append("## This Run — Steps")
+    lines.append("")
+    lines.append("| Step | Status |")
+    lines.append("|------|--------|")
+    for step, status in steps.items():
+        icon = ICONS.get(status, status)
+        lines.append(f"| {step.replace('_', ' ').title()} | {icon} |")
+    lines.append("")
+
+    # --- Batfish section ---
+    if batfish is not None:
+        bf = batfish
+        blocking = bf.get("blocking_issues", 0)
+        verdict  = "PASSED — no blocking issues" if not blocking else f"FAILED — {blocking} blocking issue(s)"
+        lines.append("## Batfish Static Analysis")
+        lines.append("")
+        lines.append(f"**{verdict}**")
+        lines.append("")
+        lines.append("| Check | Count |")
+        lines.append("|-------|-------|")
+        lines.append(f"| Init warnings (unrecognised EOS syntax) | {bf.get('init_warnings', 0)} |")
+        lines.append(f"| Init errors (Batfish parser gaps)        | {bf.get('init_errors', 0)} |")
+        lines.append(f"| BGP sessions matched (UNIQUE_MATCH)      | {bf.get('bgp_ok', 0)} |")
+        lines.append(f"| BGP warnings (cEOS peer-group limits)    | {bf.get('bgp_warnings', 0)} |")
+        lines.append(f"| BGP failures (blocking)                  | {bf.get('bgp_failures', 0)} |")
+        lines.append(f"| Undefined refs — BGP (false positives)   | {bf.get('undef_fp', 0)} |")
+        lines.append(f"| Undefined refs — non-BGP (blocking)      | {bf.get('undef_blocking', 0)} |")
+        lines.append(f"| **Total blocking issues**                | **{blocking}** |")
+        lines.append("")
+
+    # --- ANTA section ---
+    if anta is not None:
+        lines.append("## ANTA Validation")
+        lines.append("")
+        lines.append("| Result | Count |")
+        lines.append("|--------|-------|")
+        lines.append(f"| Total   | {anta.get('total', 0)} |")
+        lines.append(f"| Passed  | {anta.get('passed', 0)} |")
+        lines.append(f"| Skipped | {anta.get('skipped', 0)} |")
+        lines.append(f"| Failed  | {anta.get('failed', 0)} |")
+        lines.append("")
+
+        failures = anta.get("failures", [])
+        if failures:
+            lines.append("### Failed Tests")
+            lines.append("")
+            lines.append("| Device | Test | Message |")
+            lines.append("|--------|------|---------|")
+            for row in failures:
+                device  = str(row.get("Device", "")).replace("|", "\\|")
+                test    = str(row.get("Test Name", "")).replace("|", "\\|")
+                message = str(row.get("Message(s)", "")).replace("|", "\\|")
+                lines.append(f"| {device} | {test} | {message} |")
+            lines.append("")
+
+    return "\n".join(lines)
+
+
+def write_pipeline_report(report: dict):
+    """Append compact summary to history.json (keep 10) and write latest.html."""
+    PIPELINE_RUNS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Build compact summary for history
+    anta    = report.get("anta") or {}
+    batfish = report.get("batfish") or {}
+    summary = {
+        "timestamp":        report["timestamp"],
+        "result":           report["result"],
+        "duration_s":       report["duration_s"],
+        "git_commit":       report.get("git_commit", "unknown"),
+        "steps":            report["steps"],
+        "batfish_blocking": batfish.get("blocking_issues") if report.get("batfish") is not None else None,
+        "anta_passed":      anta.get("passed")  if report.get("anta") is not None else None,
+        "anta_failed":      anta.get("failed")  if report.get("anta") is not None else None,
+        "anta_skipped":     anta.get("skipped") if report.get("anta") is not None else None,
+    }
+
+    # Load existing history, append, keep last 10
+    history = []
+    if HISTORY_JSON.exists():
+        try:
+            history = json.loads(HISTORY_JSON.read_text())
+        except Exception:
+            history = []
+    history.append(summary)
+    history = history[-10:]
+
+    HISTORY_JSON.write_text(json.dumps(history, indent=2, default=str))
+    LATEST_MD.write_text(_build_md(report, history))
+    log(f"Pipeline report updated: {PIPELINE_RUNS_DIR}/", "INFO")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -531,9 +714,22 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     args = parse_args()
-    lab_is_up        = False
-    batfish_started  = False
-    pipeline_ok      = True
+    lab_is_up       = False
+    batfish_started = False
+    pipeline_ok     = True
+    run_ts          = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    start_time      = time.time()
+    current_step    = None
+    batfish_summary = None
+    anta_result     = None
+
+    steps = {
+        "clab_up":  "SKIP" if args.skip_clab_up  else "NOT_RUN",
+        "build":    "SKIP" if args.skip_build     else "NOT_RUN",
+        "batfish":  "SKIP" if args.skip_batfish   else "NOT_RUN",
+        "deploy":   "SKIP" if args.skip_deploy    else "NOT_RUN",
+        "validate": "SKIP" if args.skip_validate  else "NOT_RUN",
+    }
 
     def handle_signal(sig, frame):
         print()
@@ -545,7 +741,7 @@ def main():
     signal.signal(signal.SIGINT,  handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
-    banner(f"AVD Digital Twin Pipeline  [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+    banner(f"AVD Digital Twin Pipeline  [{run_ts.replace('T', ' ')}]")
 
     # --- Argument warnings ---
     if args.skip_clab_up and not args.skip_deploy:
@@ -557,8 +753,10 @@ def main():
 
     try:
         if not args.skip_clab_up:
+            current_step = "clab_up"
             clab_up()
             wait_for_devices()
+            steps["clab_up"] = "PASS"
         else:
             log("Skipping clab-up (--skip-clab-up)", "WARN")
             if not args.skip_deploy:
@@ -566,31 +764,59 @@ def main():
         lab_is_up = True
 
         if not args.skip_build:
+            current_step = "build"
             avd_build()
+            steps["build"] = "PASS"
 
         if not args.skip_batfish:
             batfish_started = start_batfish()
-            batfish_analyze()
+            current_step = "batfish"
+            batfish_summary = batfish_analyze()
+            if batfish_summary.get("blocking_issues", 0) > 0:
+                steps["batfish"] = "FAIL"
+                raise RuntimeError(
+                    f"Batfish static analysis FAILED with "
+                    f"{batfish_summary['blocking_issues']} blocking issue(s)."
+                )
+            steps["batfish"] = "PASS"
 
         if not args.skip_deploy:
+            current_step = "deploy"
             avd_deploy()
             wait_for_convergence(args.convergence_wait)
+            steps["deploy"] = "PASS"
 
         if not args.skip_validate:
+            current_step = "validate"
             avd_validate()
 
             passed, failed, skipped, failures = parse_results()
             print_report(passed, failed, skipped, failures)
 
+            anta_result = {
+                "total":    passed + failed + skipped,
+                "passed":   passed,
+                "skipped":  skipped,
+                "failed":   failed,
+                "failures": failures,
+            }
+
             if failed:
                 pipeline_ok = False
+                steps["validate"] = "FAIL"
+            else:
+                steps["validate"] = "PASS"
 
     except subprocess.CalledProcessError as e:
         log(f"Step failed (exit {e.returncode})", "FAIL")
         pipeline_ok = False
+        if current_step and steps.get(current_step) not in ("PASS", "SKIP"):
+            steps[current_step] = "FAIL"
     except (TimeoutError, RuntimeError) as e:
         log(str(e), "FAIL")
         pipeline_ok = False
+        if current_step and steps.get(current_step) not in ("PASS", "SKIP", "FAIL"):
+            steps[current_step] = "FAIL"
 
     finally:
         if batfish_started:
@@ -603,6 +829,20 @@ def main():
             clab_down()
         elif lab_is_up:
             log("Lab left running — use 'make clab-down' to destroy.", "WARN")
+
+        report = {
+            "timestamp":  run_ts,
+            "result":     "PASSED" if pipeline_ok else "FAILED",
+            "duration_s": int(time.time() - start_time),
+            "git_commit": get_git_commit(),
+            "steps":      steps,
+            "batfish":    batfish_summary,
+            "anta":       anta_result,
+        }
+        try:
+            write_pipeline_report(report)
+        except Exception as exc:
+            log(f"Could not write pipeline report: {exc}", "WARN")
 
     if pipeline_ok:
         banner("PIPELINE PASSED")

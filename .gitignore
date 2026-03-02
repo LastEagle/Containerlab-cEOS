@@ -213,6 +213,7 @@ intended/
 documentation/
 reports/
 config_backup/
+pipeline-runs/
 
 # Containerlab runtime artifacts
 clab-*/
