@@ -12,7 +12,7 @@ VALIDATE_PLAY ?= $(LABDIR)/playbooks/validate.yml
 VENV ?= arista-avd-lab/cenv
 ACT  := . $(VENV)/bin/activate
 
-.PHONY: venv deps clab-up clab-down build deploy validate endpoints reset all pipeline pipeline-no-batfish batfish
+.PHONY: venv deps clab-up clab-down clab-reconfigure build deploy validate endpoints reset all pipeline pipeline-no-batfish batfish
 
 venv:
 	python3 -m venv $(VENV)
@@ -28,6 +28,9 @@ clab-up:
 
 clab-down:
 	sudo containerlab destroy -t $(TOPO)
+
+clab-reconfigure:
+	sudo containerlab deploy -t $(TOPO) --reconfigure
 
 build:
 	$(ACT) && ansible-playbook -i $(INV) $(BUILD_PLAY)
